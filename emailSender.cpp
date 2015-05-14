@@ -1,15 +1,3 @@
-/*===================================================================================
-                                        Watcher
-                             Copyright Kerry R. Loux 2013
-
-               Uses:
-	               wxWidgets:  http://www.wxwidgets.org/
-	               Live555:    http://www.live555.com/
-		           FFMPEG:     http://www.ffmpeg.org/
-				   cURL:       http://curl.haxx.se/libcurl/
-
-===================================================================================*/
-
 // File:  emailSender.cpp
 // Date:  4/10/2013
 // Auth:  K. Loux

@@ -1,13 +1,3 @@
-/*===================================================================================
-                                        Watcher
-                             Copyright Kerry R. Loux 2013
-
-                  Uses:
-                      cURL:    http://curl.haxx.se/libcurl/
-					  cJOSN:   http://sourceforge.net/projects/cjson/
-
-===================================================================================*/
-
 // File:  oAuth2Interface.h
 // Date:  4/15/2013
 // Auth:  K. Loux
