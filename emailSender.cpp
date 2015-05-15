@@ -10,14 +10,16 @@
 #include <sstream>
 
 // OS headers
-#ifdef __WXMSW__
+#ifdef _WIN32
+#define NOMINMAX
 #include <Windows.h>
 #else
 #include <sys/time.h>
 #endif
 
-// wxWidgets headers
-#include <wx/wx.h>
+// Standard C++ headers
+#include <cassert>
+#include <algorithm>
 
 // cURL headers
 #include <curl/curl.h>
@@ -49,16 +51,16 @@
 //==========================================================================
 EmailSender::EmailSender(const std::string &subject, const std::string &message,
 	const std::string &imageFileName, const std::vector<std::string> &recipients,
-	const LoginInfo &systemConfig, const bool& testMode) :
+	const LoginInfo &systemConfig, const bool& testMode, std::ostream &outStream) :
 	subject(subject), message(message), imageFileName(imageFileName),
-	recipients(recipients), systemConfig(systemConfig), testMode(testMode)
+	recipients(recipients), systemConfig(systemConfig), testMode(testMode), outStream(outStream)
 {
 	assert(recipients.size() > 0);
 
 	if (testMode)
 	{
-		std::cout << "Using cURL version:" << std::endl << curl_version() << std::endl;
-		std::cout << "Image file name: '" << imageFileName << "'." << std::endl;
+		outStream << "Using cURL version:" << std::endl << curl_version() << std::endl;
+		outStream << "Image file name: '" << imageFileName << "'." << std::endl;
 	}
 
 	payloadLines = 0;
@@ -126,7 +128,7 @@ bool EmailSender::Send()
 
 	if (systemConfig.oAuth2Token.empty())
 	{
-		if (/*systemConfig.useSSL*/true)
+		if (systemConfig.useSSL)
 			curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
 		curl_easy_setopt(curl, CURLOPT_PASSWORD, systemConfig.password.c_str());
 	}
@@ -138,8 +140,15 @@ bool EmailSender::Send()
 
 	if (testMode)
 	{
-		std::cout << "Sending messages from " << systemConfig.localEmail
-			<< " to " << systemConfig.targetEmail << std::endl;
+		outStream << "Sending messages from " << systemConfig.localEmail << " to ";
+		unsigned int i;
+		for (i = 0; i < recipients.size(); i++)
+		{
+			if (i > 0)
+				outStream << ", ";
+			outStream << recipients[i];
+		}
+		outStream << std::endl;
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 	}
 

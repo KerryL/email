@@ -10,18 +10,21 @@
 #include <vector>
 #include <string>
 
-// wxWidgets headers
-#include <wx/wx.h>
-
-// Local headers
-#include "configInfo.h"
-
 class EmailSender
 {
 public:
+	struct LoginInfo
+	{
+		std::string smtpUrl;
+		std::string localEmail;
+		std::string oAuth2Token;
+		std::string password;
+		bool useSSL;
+	};
+
 	EmailSender(const std::string &subject, const std::string &message, const std::string &imageFileName,
 		const std::vector<std::string> &recipients, const LoginInfo &systemConfig,
-		const bool &testMode);
+		const bool &testMode, std::ostream &outStream = std::cout);
 	virtual ~EmailSender();
 
 	bool Send();
@@ -33,6 +36,7 @@ private:
 	const std::vector<std::string> &recipients;
 	const LoginInfo systemConfig;
 	const bool testMode;
+	std::ostream &outStream;
 
 	struct UploadStatus
 	{
