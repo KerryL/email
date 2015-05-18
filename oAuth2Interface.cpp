@@ -195,7 +195,7 @@ std::string OAuth2Interface::RequestRefreshToken(void)
 		time_t now = startTime;
 		while (!HandleRefreshRequestResponse(readBuffer, true))
 		{
-#ifdef __WXMSW__
+#ifdef _WIN32
 			Sleep(1000 * authResponse.interval);
 #else
 			sleep(authResponse.interval);

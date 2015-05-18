@@ -106,7 +106,7 @@ EmailSender::~EmailSender()
 //		None
 //
 // Return Value:
-//		wxThread::ExitCode
+//		bool
 //
 //==========================================================================
 bool EmailSender::Send()
@@ -405,7 +405,7 @@ std::string EmailSender::GetDateString(void)
 	const unsigned int bufferSize(80);
 	char buffer[bufferSize];
 
-#ifdef __WXMSW__
+#ifdef _WIN32
 	struct tm now;
 	localtime_s(&now, &nowTime);
 	strftime(buffer, bufferSize, "%a, %d %b %Y %H:%M:%S %z", &now);
@@ -636,7 +636,7 @@ long long EmailSender::GetMillisecondsSinceEpoch(void)
 {
 	long long seconds = time(NULL);
 	long long msecs;
-#ifdef __WXMSW__
+#ifdef _WIN32
 	// msec since system was started - keep only the fractional part
 	// Windows doesn't have a similar function, so we just make it up.
 	msecs = (long long)GetTickCount64() % 1000LL;

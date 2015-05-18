@@ -1,7 +1,7 @@
 // File:  emailSender.h
 // Date:  4/10/2013
 // Auth:  K. Loux
-// Desc:  wxThread derived class which uses libcurl to send e-mails.
+// Desc:  Class which uses libcurl to send e-mails.
 
 #ifndef _EMAIL_SENDER_H_
 #define _EMAIL_SENDER_H_
