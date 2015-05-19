@@ -39,7 +39,7 @@
 //		message			= const std::string&
 //		imageFileName	= const std::string&
 //		recipients		= const std::vector<std::string>&
-//		systemConfig	= const SystemEmailConfiguration
+//		loginInfo		= const SystemEmailConfiguration
 //		testMode		= const TestConfiguration::TestMode&
 //
 // Output Arguments:
@@ -51,9 +51,9 @@
 //==========================================================================
 EmailSender::EmailSender(const std::string &subject, const std::string &message,
 	const std::string &imageFileName, const std::vector<std::string> &recipients,
-	const LoginInfo &systemConfig, const bool& testMode, std::ostream &outStream) :
+	const LoginInfo &loginInfo, const bool& testMode, std::ostream &outStream) :
 	subject(subject), message(message), imageFileName(imageFileName),
-	recipients(recipients), systemConfig(systemConfig), testMode(testMode), outStream(outStream)
+	recipients(recipients), loginInfo(loginInfo), testMode(testMode), outStream(outStream)
 {
 	assert(recipients.size() > 0);
 
@@ -124,13 +124,13 @@ bool EmailSender::Send()
 	struct curl_slist *recipientList = NULL;
 
 	curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
-	curl_easy_setopt(curl, CURLOPT_URL, systemConfig.smtpUrl.c_str());
+	curl_easy_setopt(curl, CURLOPT_URL, loginInfo.smtpUrl.c_str());
 
-	if (systemConfig.oAuth2Token.empty())
+	if (loginInfo.oAuth2Token.empty())
 	{
-		if (systemConfig.useSSL)
+		if (loginInfo.useSSL)
 			curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
-		curl_easy_setopt(curl, CURLOPT_PASSWORD, systemConfig.password.c_str());
+		curl_easy_setopt(curl, CURLOPT_PASSWORD, loginInfo.password.c_str());
 	}
 	else
 	{
@@ -140,7 +140,7 @@ bool EmailSender::Send()
 
 	if (testMode)
 	{
-		outStream << "Sending messages from " << systemConfig.localEmail << " to ";
+		outStream << "Sending messages from " << loginInfo.localEmail << " to ";
 		unsigned int i;
 		for (i = 0; i < recipients.size(); i++)
 		{
@@ -152,8 +152,8 @@ bool EmailSender::Send()
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 	}
 
-	curl_easy_setopt(curl, CURLOPT_USERNAME, systemConfig.localEmail.c_str());
-	curl_easy_setopt(curl, CURLOPT_MAIL_FROM, ("<" + systemConfig.localEmail + ">").c_str());
+	curl_easy_setopt(curl, CURLOPT_USERNAME, loginInfo.localEmail.c_str());
+	curl_easy_setopt(curl, CURLOPT_MAIL_FROM, ("<" + loginInfo.localEmail + ">").c_str());
 
 	unsigned int i;
 	for (i = 0; i < recipients.size(); i++)
@@ -215,7 +215,7 @@ void EmailSender::GeneratePayloadText(void)
 	// Normal header
 	payloadText[k] = AddPayloadText("Date: " + GetDateString() + "\n"); k++;
 	payloadText[k] = AddPayloadText("To: " + list + "\n"); k++;
-	payloadText[k] = AddPayloadText("From: " + systemConfig.localEmail + "\n"); k++;
+	payloadText[k] = AddPayloadText("From: " + loginInfo.localEmail + "\n"); k++;
 	payloadText[k] = AddPayloadText("Message-ID: " + GenerateMessageID() + "\n"); k++;
 	payloadText[k] = AddPayloadText(("Subject: " + subject + "\n").c_str()); k++;
 
@@ -378,7 +378,7 @@ char* EmailSender::AddPayloadText(const std::string &s) const
 //==========================================================================
 std::string EmailSender::NameToHeaderAddress(const std::string &s)
 {
-	return systemConfig.targetEmail + " (" + s + ")";
+	return s + " (" + s + ")";
 }
 
 //==========================================================================
@@ -442,7 +442,7 @@ std::string EmailSender::GenerateMessageID(void) const
 	id.append(OAuth2Interface::Base36Encode((long long)rand() * (long long)rand()
 		* (long long)rand() * (long long)rand()));
 	id.append("@");
-	id.append(ExtractDomain(systemConfig.localEmail));
+	id.append(ExtractDomain(loginInfo.localEmail));
 	id.append(">");
 
 	return id;

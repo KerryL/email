@@ -23,7 +23,7 @@ public:
 	};
 
 	EmailSender(const std::string &subject, const std::string &message, const std::string &imageFileName,
-		const std::vector<std::string> &recipients, const LoginInfo &systemConfig,
+		const std::vector<std::string> &recipients, const LoginInfo &loginInfo,
 		const bool &testMode, std::ostream &outStream = std::cout);
 	virtual ~EmailSender();
 
@@ -34,7 +34,7 @@ private:
 	const std::string message;
 	const std::string imageFileName;
 	const std::vector<std::string> &recipients;
-	const LoginInfo systemConfig;
+	const LoginInfo loginInfo;
 	const bool testMode;
 	std::ostream &outStream;
 
