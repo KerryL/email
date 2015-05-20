@@ -11,9 +11,13 @@
 #include <ctime>
 #include <algorithm>
 
-// *nix headers
-#include <unistd.h>
+// Standard C headers
 #include <string.h>
+
+// *nix headers
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 // cURL headers
 #include <curl/curl.h>
