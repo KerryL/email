@@ -40,7 +40,8 @@
 //		imageFileName	= const std::string&
 //		recipients		= const std::vector<std::string>&
 //		loginInfo		= const SystemEmailConfiguration
-//		testMode		= const TestConfiguration::TestMode&
+//		useHTML			= const bool&
+//		testMode		= const bool&
 //
 // Output Arguments:
 //		None
@@ -51,11 +52,13 @@
 //==========================================================================
 EmailSender::EmailSender(const std::string &subject, const std::string &message,
 	const std::string &imageFileName, const std::vector<std::string> &recipients,
-	const LoginInfo &loginInfo, const bool& testMode, std::ostream &outStream) :
-	subject(subject), message(message), imageFileName(imageFileName),
-	recipients(recipients), loginInfo(loginInfo), testMode(testMode), outStream(outStream)
+	const LoginInfo &loginInfo, const bool &useHTML, const bool& testMode,
+	std::ostream &outStream) : subject(subject), message(message), imageFileName(imageFileName),
+	recipients(recipients), loginInfo(loginInfo), useHTML(useHTML), testMode(testMode),
+	outStream(outStream)
 {
 	assert(recipients.size() > 0);
+	assert(!useHTML || imageFileName.empty());
 
 	if (testMode)
 	{
@@ -166,7 +169,7 @@ bool EmailSender::Send()
 
     result = curl_easy_perform(curl);
     if(result != CURLE_OK)
-		std::cerr << "Failed sending e-mail:  " << curl_easy_strerror(result) << std::endl;
+		outStream << "Failed sending e-mail:  " << curl_easy_strerror(result) << std::endl;
 
     curl_slist_free_all(recipientList);
     curl_easy_cleanup(curl);
@@ -199,10 +202,14 @@ void EmailSender::GeneratePayloadText(void)
 	std::string base64File;
 	if (!imageFileName.empty())
 	{
+		assert(!useHTML);
 		unsigned int lines;
 		base64File = Base64Encode(imageFileName, lines);
 		payloadLines += 18 + lines;// Not sure why 18 (I count 16), but there is an extra +2 that needs to be here
 	}
+	else if (useHTML)
+		payloadLines += 11;
+
 	payloadText = new char*[payloadLines];
 
 	std::string list(NameToHeaderAddress(recipients[0]));
@@ -230,6 +237,18 @@ void EmailSender::GeneratePayloadText(void)
 		payloadText[k] = AddPayloadText("--" + boundary + "\n"); k++;
 		payloadText[k] = AddPayloadText("Content-Type: text/plain; charset=ISO-8859-1\n"); k++;
 		payloadText[k] = AddPayloadText("Content-Transfer-Encoding: quoted-printable\n"); k++;
+	}
+	else if (useHTML)
+	{
+		payloadText[k] = AddPayloadText("Content-Type: text/html; charset=ISO-8859-1\n"); k++;
+		payloadText[k] = AddPayloadText("Content-Transfer-Encoding: quoted-printable\n"); k++;
+		payloadText[k] = AddPayloadText("MIME-Version: 1.0\n"); k++;
+		payloadText[k] = AddPayloadText("\n"); k++;
+		payloadText[k] = AddPayloadText("<html>\n"); k++;
+		payloadText[k] = AddPayloadText("<head>\n"); k++;
+		payloadText[k] = AddPayloadText("<meta http-equiv=3D\"Content-Type\" content=3D\"text/html; charset=3D\"ISO-8859-1\">\n"); k++;
+		payloadText[k] = AddPayloadText("</head>\n"); k++;
+		payloadText[k] = AddPayloadText("<body>\n"); k++;
 	}
 
 	// Normal body
@@ -262,6 +281,13 @@ void EmailSender::GeneratePayloadText(void)
 				std::min(cr - lastCr, (size_t)base64File.size() - lastCr))); k++;
 		}
 		payloadText[k] = AddPayloadText("--" + boundary + "\n"); k++;
+	}
+	else if (useHTML)
+	{
+		// TODO:  Should it be the caller's responsiblity to already have
+		// formatted the message to include these tags?
+		payloadText[k] = AddPayloadText("</body>\n"); k++;
+		payloadText[k] = AddPayloadText("</html>\n"); k++;
 	}
 
 	payloadText[k] = AddPayloadText("\0"); k++;
