@@ -11,6 +11,9 @@
 #include <string>
 #include <ctime>
 
+// utilities headers
+#include "utilities/portable.h"
+
 // cJSON (local) forward declarations
 struct cJSON;
 
@@ -37,7 +40,7 @@ public:
 	std::string GetRefreshToken(void) const { return refreshToken; };
 	std::string GetAccessToken(void);
 
-	static std::string Base36Encode(const long long &value);
+	static std::string Base36Encode(const LongLong &value);
 
 private:
 	OAuth2Interface();

@@ -63,7 +63,6 @@ private:
 	static std::string GenerateBoundryID(void);
 	static std::string ExtractDomain(const std::string &s);
 	static std::string Base64Encode(const std::string &fileName, unsigned int &lines);
-	static long long GetMillisecondsSinceEpoch(void);
 	static std::string GetExtension(const std::string &s);
 };
 

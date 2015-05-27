@@ -465,8 +465,8 @@ std::string EmailSender::GenerateMessageID(void) const
 	std::string id("<");
 	id.append(OAuth2Interface::Base36Encode(GetMillisecondsSinceEpoch()));
 	id.append(".");
-	id.append(OAuth2Interface::Base36Encode((long long)rand() * (long long)rand()
-		* (long long)rand() * (long long)rand()));
+	id.append(OAuth2Interface::Base36Encode((LongLong)rand() * (LongLong)rand()
+		* (LongLong)rand() * (LongLong)rand()));
 	id.append("@");
 	id.append(ExtractDomain(loginInfo.localEmail));
 	id.append(">");
@@ -492,10 +492,10 @@ std::string EmailSender::GenerateMessageID(void) const
 //==========================================================================
 std::string EmailSender::GenerateBoundryID(void)
 {
-	return OAuth2Interface::Base36Encode((long long)rand() * (long long)rand()
-		* (long long)rand() * (long long)rand()
-		* (long long)rand() * (long long)rand()
-		* (long long)rand() * (long long)rand());
+	return OAuth2Interface::Base36Encode((LongLong)rand() * (LongLong)rand()
+		* (LongLong)rand() * (LongLong)rand()
+		* (LongLong)rand() * (LongLong)rand()
+		* (LongLong)rand() * (LongLong)rand());
 }
 
 //==========================================================================
@@ -655,21 +655,21 @@ std::string EmailSender::Base64Encode(const std::string &fileName, unsigned int 
 //		None
 //
 // Return Value:
-//		long long
+//		LongLong
 //
 //==========================================================================
-long long EmailSender::GetMillisecondsSinceEpoch(void)
+LongLong EmailSender::GetMillisecondsSinceEpoch(void)
 {
-	long long seconds = time(NULL);
-	long long msecs;
+	LongLong seconds = time(NULL);
+	LongLong msecs;
 #ifdef _WIN32
 	// msec since system was started - keep only the fractional part
 	// Windows doesn't have a similar function, so we just make it up.
-	msecs = (long long)GetTickCount64() % 1000LL;
+	msecs = (LongLong)GetTickCount64() % 1000LL;
 #else
 	/*struct timeval tp;
 	gettimeofday(&tp);
-	long long ms = tp.tv_sec * 1000LL + tp.tv_usec / 1000LL;*/
+	LongLong ms = tp.tv_sec * 1000LL + tp.tv_usec / 1000LL;*/
 	// FIXME:  Linux implementation needs work
 	// See: http://stackoverflow.com/questions/1952290/how-can-i-get-utctime-in-milisecond-since-january-1-1970-in-c-language
 	msecs = 0;
