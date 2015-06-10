@@ -129,6 +129,9 @@ bool EmailSender::Send()
 	curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 	curl_easy_setopt(curl, CURLOPT_URL, loginInfo.smtpUrl.c_str());
 
+	if (!loginInfo.caCertificatePath.empty())
+		curl_easy_setopt(curl, CURLOPT_CAPATH, loginInfo.caCertificatePath.c_str());
+
 	if (loginInfo.oAuth2Token.empty())
 	{
 		if (loginInfo.useSSL)

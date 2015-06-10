@@ -20,6 +20,7 @@ public:
 		std::string oAuth2Token;
 		std::string password;
 		bool useSSL;
+		std::string caCertificatePath;
 	};
 
 	EmailSender(const std::string &subject, const std::string &message, const std::string &imageFileName,

@@ -21,20 +21,21 @@ public:
 	static OAuth2Interface& Get(void);
 	static void Destroy(void);
 
-	void SetAuthenticationURL(const std::string &authURL) { this->authURL = authURL; };
-	void SetTokenURL(const std::string &tokenURL) { this->tokenURL = tokenURL; };
-	void SetResponseType(const std::string &responseType) { this->responseType = responseType; };
-	void SetClientID(const std::string &clientID) { this->clientID = clientID; };
-	void SetClientSecret(const std::string &clientSecret) { this->clientSecret = clientSecret; };
-	void SetRedirectURI(const std::string &redirectURI) { this->redirectURI = redirectURI; };
-	void SetScope(const std::string &scope) { this->scope = scope; };
-	void SetLoginHint(const std::string &loginHint) { this->loginHint = loginHint; };
-	void SetGrantType(const std::string &grantType) { this->grantType = grantType; };
-	void SetVerboseOutput(const bool &verbose = true) { this->verbose = verbose; };
+	void SetAuthenticationURL(const std::string &authURL) { this->authURL = authURL; }
+	void SetTokenURL(const std::string &tokenURL) { this->tokenURL = tokenURL; }
+	void SetResponseType(const std::string &responseType) { this->responseType = responseType; }
+	void SetClientID(const std::string &clientID) { this->clientID = clientID; }
+	void SetClientSecret(const std::string &clientSecret) { this->clientSecret = clientSecret; }
+	void SetRedirectURI(const std::string &redirectURI) { this->redirectURI = redirectURI; }
+	void SetScope(const std::string &scope) { this->scope = scope; }
+	void SetLoginHint(const std::string &loginHint) { this->loginHint = loginHint; }
+	void SetGrantType(const std::string &grantType) { this->grantType = grantType; }
+	void SetVerboseOutput(const bool &verbose = true) { this->verbose = verbose; }
+	void SetCertificatePath(const std::string &caCertificatePath) { this->caCertificatePath = caCertificatePath; }
 	
 	void SetRefreshToken(const std::string &refreshToken = "");
 
-	std::string GetRefreshToken(void) const { return refreshToken; };
+	std::string GetRefreshToken(void) const { return refreshToken; }
 	std::string GetAccessToken(void);
 
 	static std::string Base36Encode(const long long &value);
@@ -54,6 +55,8 @@ private:
 
 	std::string refreshToken;
 	std::string accessToken;
+
+	std::string caCertificatePath;
 
 	bool verbose;
 
