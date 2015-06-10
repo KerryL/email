@@ -252,8 +252,8 @@ std::string OAuth2Interface::RequestRefreshToken(void)
 		}
 
 		if (!DoCURLPost(tokenURL, AssembleAccessRequestQueryString(authorizationCode), readBuffer) ||
-		ResponseContainsError(readBuffer) ||
-		!HandleRefreshRequestResponse(readBuffer))
+			ResponseContainsError(readBuffer) ||
+			!HandleRefreshRequestResponse(readBuffer))
 		{
 			std::cerr << "Failed to obtain refresh token" << std::endl;
 			return "";
@@ -631,8 +631,8 @@ std::string OAuth2Interface::AssembleAccessRequestQueryString(const std::string 
 	{
 		queryString.append("&code=" + code);
 		queryString.append("&grant_type=" + grantType);
-		assert(!redirectURI.empty());
-		queryString.append("&redirect_uri=" + redirectURI);
+		if (!redirectURI.empty())
+			queryString.append("&redirect_uri=" + redirectURI);
 	}
 
 	return queryString;
