@@ -8,6 +8,7 @@
 #include <fstream>
 #include <time.h>
 #include <sstream>
+#include <cstring>
 
 // OS headers
 #ifdef _WIN32
@@ -27,6 +28,9 @@
 // Local headers
 #include "emailSender.h"
 #include "oAuth2Interface.h"
+
+// rpi headers
+#include "rpi/timingUtility.h"
 
 //==========================================================================
 // Class:			EmailSender
@@ -196,7 +200,7 @@ bool EmailSender::Send()
 //		None
 //
 //==========================================================================
-void EmailSender::GeneratePayloadText(void)
+void EmailSender::GeneratePayloadText()
 {
 	DeletePayloadText();
 	GenerateMessageText();
@@ -314,7 +318,7 @@ void EmailSender::GeneratePayloadText(void)
 //		None
 //
 //==========================================================================
-void EmailSender::GenerateMessageText(void)
+void EmailSender::GenerateMessageText()
 {
 	DeleteMessageText();
 	std::stringstream mStream(message);
@@ -351,7 +355,7 @@ void EmailSender::GenerateMessageText(void)
 //		None
 //
 //==========================================================================
-void EmailSender::DeleteMessageText(void)
+void EmailSender::DeleteMessageText()
 {
 	if (messageText)
 	{
@@ -426,7 +430,7 @@ std::string EmailSender::NameToHeaderAddress(const std::string &s)
 //		std::string
 //
 //==========================================================================
-std::string EmailSender::GetDateString(void)
+std::string EmailSender::GetDateString()
 {
 	time_t nowTime;
 	time(&nowTime);
@@ -463,13 +467,13 @@ std::string EmailSender::GetDateString(void)
 //		std::string
 //
 //==========================================================================
-std::string EmailSender::GenerateMessageID(void) const
+std::string EmailSender::GenerateMessageID() const
 {
 	std::string id("<");
-	id.append(OAuth2Interface::Base36Encode(GetMillisecondsSinceEpoch()));
+	id.append(OAuth2Interface::Base36Encode(TimingUtility::GetMillisecondsSinceEpoch()));
 	id.append(".");
-	id.append(OAuth2Interface::Base36Encode((long long)rand() * (long long)rand()
-		* (long long)rand() * (long long)rand()));
+	id.append(OAuth2Interface::Base36Encode((LongLong)rand() * (LongLong)rand()
+		* (LongLong)rand() * (LongLong)rand()));
 	id.append("@");
 	id.append(ExtractDomain(loginInfo.localEmail));
 	id.append(">");
@@ -493,12 +497,12 @@ std::string EmailSender::GenerateMessageID(void) const
 //		std::string
 //
 //==========================================================================
-std::string EmailSender::GenerateBoundryID(void)
+std::string EmailSender::GenerateBoundryID()
 {
-	return OAuth2Interface::Base36Encode((long long)rand() * (long long)rand()
-		* (long long)rand() * (long long)rand()
-		* (long long)rand() * (long long)rand()
-		* (long long)rand() * (long long)rand());
+	return OAuth2Interface::Base36Encode((LongLong)rand() * (LongLong)rand()
+		* (LongLong)rand() * (LongLong)rand()
+		* (LongLong)rand() * (LongLong)rand()
+		* (LongLong)rand() * (LongLong)rand());
 }
 
 //==========================================================================
@@ -647,42 +651,6 @@ std::string EmailSender::Base64Encode(const std::string &fileName, unsigned int 
 
 //==========================================================================
 // Class:			EmailSender
-// Function:		GetMillisecondsSinceEpoch
-//
-// Description:		Returns the current time in "milliseconds since unix epoch."
-//
-// Input Arguments:
-//		None
-//
-// Output Arguments:
-//		None
-//
-// Return Value:
-//		long long
-//
-//==========================================================================
-long long EmailSender::GetMillisecondsSinceEpoch(void)
-{
-	long long seconds = time(NULL);
-	long long msecs;
-#ifdef _WIN32
-	// msec since system was started - keep only the fractional part
-	// Windows doesn't have a similar function, so we just make it up.
-	msecs = (long long)GetTickCount64() % 1000LL;
-#else
-	/*struct timeval tp;
-	gettimeofday(&tp);
-	long long ms = tp.tv_sec * 1000LL + tp.tv_usec / 1000LL;*/
-	// FIXME:  Linux implementation needs work
-	// See: http://stackoverflow.com/questions/1952290/how-can-i-get-utctime-in-milisecond-since-january-1-1970-in-c-language
-	msecs = 0;
-#endif
-
-	return seconds * 1000LL + msecs;
-}
-
-//==========================================================================
-// Class:			EmailSender
 // Function:		DeletePayloadText
 //
 // Description:		Deletes the payload text buffer.
@@ -697,7 +665,7 @@ long long EmailSender::GetMillisecondsSinceEpoch(void)
 //		None
 //
 //==========================================================================
-void EmailSender::DeletePayloadText(void)
+void EmailSender::DeletePayloadText()
 {
 	if (payloadText)
 	{
