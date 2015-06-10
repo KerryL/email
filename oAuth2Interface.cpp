@@ -296,6 +296,9 @@ bool OAuth2Interface::DoCURLPost(const std::string &url, const std::string &data
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 	curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
 
+	if (!caCertificatePath.empty())
+		curl_easy_setopt(curl, CURLOPT_CAPATH, caCertificatePath.c_str());
+
 	if (verbose)
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 

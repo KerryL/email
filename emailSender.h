@@ -20,6 +20,7 @@ public:
 		std::string oAuth2Token;
 		std::string password;
 		bool useSSL;
+		std::string caCertificatePath;
 	};
 
 	EmailSender(const std::string &subject, const std::string &message, const std::string &imageFileName,
@@ -35,8 +36,8 @@ private:
 	const std::string imageFileName;
 	const std::vector<std::string> &recipients;
 	const LoginInfo loginInfo;
-	const bool testMode;
 	const bool useHTML;
+	const bool testMode;
 	std::ostream &outStream;
 
 	struct UploadStatus
@@ -46,21 +47,21 @@ private:
 	} uploadCtx;
 
 	static size_t PayloadSource(void *ptr, size_t size, size_t nmemb, void *userp);
-	void GeneratePayloadText(void);
+	void GeneratePayloadText();
 	char* AddPayloadText(const std::string &s) const;
 	char **payloadText;
 	unsigned int payloadLines;
-	void DeletePayloadText(void);
+	void DeletePayloadText();
 
-	void GenerateMessageText(void);
+	void GenerateMessageText();
 	char **messageText;
 	unsigned int messageLines;
-	void DeleteMessageText(void);
+	void DeleteMessageText();
 
 	std::string NameToHeaderAddress(const std::string &s);
-	static std::string GetDateString(void);
-	std::string GenerateMessageID(void) const;
-	static std::string GenerateBoundryID(void);
+	static std::string GetDateString();
+	std::string GenerateMessageID() const;
+	static std::string GenerateBoundryID();
 	static std::string ExtractDomain(const std::string &s);
 	static std::string Base64Encode(const std::string &fileName, unsigned int &lines);
 	static std::string GetExtension(const std::string &s);
