@@ -12,34 +12,33 @@
 #include <ctime>
 
 // utilities headers
-#include "utilities/portable.h"
+#include "jsonInterface.h"
+#include "portable.h"
 
 // cJSON (local) forward declarations
 struct cJSON;
 
-class OAuth2Interface
+class OAuth2Interface : public JSONInterface
 {
 public:
 
-	static OAuth2Interface& Get(void);
-	static void Destroy(void);
+	static OAuth2Interface& Get();
+	static void Destroy();
 
-	void SetAuthenticationURL(const std::string &authURL) { this->authURL = authURL; }
-	void SetTokenURL(const std::string &tokenURL) { this->tokenURL = tokenURL; }
-	void SetResponseType(const std::string &responseType) { this->responseType = responseType; }
-	void SetClientID(const std::string &clientID) { this->clientID = clientID; }
-	void SetClientSecret(const std::string &clientSecret) { this->clientSecret = clientSecret; }
-	void SetRedirectURI(const std::string &redirectURI) { this->redirectURI = redirectURI; }
-	void SetScope(const std::string &scope) { this->scope = scope; }
-	void SetLoginHint(const std::string &loginHint) { this->loginHint = loginHint; }
-	void SetGrantType(const std::string &grantType) { this->grantType = grantType; }
-	void SetVerboseOutput(const bool &verbose = true) { this->verbose = verbose; }
-	void SetCertificatePath(const std::string &caCertificatePath) { this->caCertificatePath = caCertificatePath; }
+	void SetAuthenticationURL(const std::string &authURLIn) { authURL = authURLIn; }
+	void SetTokenURL(const std::string &tokenURLIn) { tokenURL = tokenURLIn; }
+	void SetResponseType(const std::string &responseTypeIn) { responseType = responseTypeIn; }
+	void SetClientID(const std::string &clientIDIn) { clientID = clientIDIn; }
+	void SetClientSecret(const std::string &clientSecretIn) { clientSecret = clientSecretIn; }
+	void SetRedirectURI(const std::string &redirectURIIn) { redirectURI = redirectURIIn; }
+	void SetScope(const std::string &scopeIn) { scope = scopeIn; }
+	void SetLoginHint(const std::string &loginHintIn) { loginHint = loginHintIn; }
+	void SetGrantType(const std::string &grantTypeIn) { grantType = grantTypeIn; }
 	
-	void SetRefreshToken(const std::string &refreshToken = "");
+	void SetRefreshToken(const std::string &refreshTokenIn = "");
 
-	std::string GetRefreshToken(void) const { return refreshToken; }
-	std::string GetAccessToken(void);
+	std::string GetRefreshToken() const { return refreshToken; }
+	std::string GetAccessToken();
 
 	static std::string Base36Encode(const LongLong &value);
 
@@ -59,11 +58,7 @@ private:
 	std::string refreshToken;
 	std::string accessToken;
 
-	std::string caCertificatePath;
-
-	bool verbose;
-
-	std::string RequestRefreshToken(void);
+	std::string RequestRefreshToken();
 
 	std::string AssembleRefreshRequestQueryString(const std::string &state = "") const;
 	std::string AssembleAccessRequestQueryString(const std::string &code = "") const;
@@ -75,25 +70,16 @@ private:
 		int interval;
 	};
 
-	bool DoCURLPost(const std::string &url, const std::string &data,
-		std::string &response) const;
-
 	bool HandleAuthorizationRequestResponse(const std::string &buffer,
 		AuthorizationResponse &response);
 	bool HandleRefreshRequestResponse(const std::string &buffer, const bool &silent = false);
 	bool HandleAccessRequestResponse(const std::string &buffer);
 	bool ResponseContainsError(const std::string &buffer);
 
-	std::string GenerateSecurityStateKey(void) const;
-	bool RedirectURIIsLocal(void) const;
-	bool IsLimitedInput(void) { return redirectURI.empty(); };
-	int StripPortFromLocalRedirectURI(void) const;
-
-	bool ReadJSON(cJSON *root, std::string field, int &value) const;
-	bool ReadJSON(cJSON *root, std::string field, std::string &value) const;
-	bool ReadJSON(cJSON *root, std::string field, double &value) const;
-
-	static size_t CURLWriteCallback(char *ptr, size_t size, size_t nmemb, void *userData);
+	std::string GenerateSecurityStateKey() const;
+	bool RedirectURIIsLocal() const;
+	bool IsLimitedInput() { return redirectURI.empty(); };
+	int StripPortFromLocalRedirectURI() const;
 
 	// timing information to determine if we need to request a new code
 

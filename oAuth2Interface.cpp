@@ -101,7 +101,7 @@ OAuth2Interface::~OAuth2Interface()
 //		None
 //
 //==========================================================================
-OAuth2Interface& OAuth2Interface::Get(void)
+OAuth2Interface& OAuth2Interface::Get()
 {
 	if (!singleton)
 		singleton = new OAuth2Interface;
@@ -125,7 +125,7 @@ OAuth2Interface& OAuth2Interface::Get(void)
 //		None
 //
 //==========================================================================
-void OAuth2Interface::Destroy(void)
+void OAuth2Interface::Destroy()
 {
 	if (singleton)
 		delete singleton;
@@ -150,13 +150,13 @@ void OAuth2Interface::Destroy(void)
 //		None
 //
 //==========================================================================
-void OAuth2Interface::SetRefreshToken(const std::string &refreshToken)
+void OAuth2Interface::SetRefreshToken(const std::string &refreshTokenIn)
 {
 	// If the token isn't valid, request one, otherwise, use it as-is
-	if (refreshToken.length() < 2)// TODO:  Better way to tell if it's valid?
-		this->refreshToken = RequestRefreshToken();// TODO:  Check for errors (returned empty string?)
+	if (refreshTokenIn.length() < 2)// TODO:  Better way to tell if it's valid?
+		refreshToken = RequestRefreshToken();// TODO:  Check for errors (returned empty string?)
 	else
-		this->refreshToken = refreshToken;
+		refreshToken = refreshTokenIn;
 }
 
 //==========================================================================
@@ -175,7 +175,7 @@ void OAuth2Interface::SetRefreshToken(const std::string &refreshToken)
 //		std::string containing refresh token, or emtpy string on error
 //
 //==========================================================================
-std::string OAuth2Interface::RequestRefreshToken(void)
+std::string OAuth2Interface::RequestRefreshToken()
 {
 	assert(!authURL.empty() &&
 		!tokenURL.empty());
@@ -266,73 +266,6 @@ std::string OAuth2Interface::RequestRefreshToken(void)
 
 //==========================================================================
 // Class:			OAuth2Interface
-// Function:		DoCURLPost
-//
-// Description:		Creates a cURL object, POSTs, obtains response, and cleans up.
-//
-// Input Arguments:
-//		url		= const std::string&
-//		data	= const std::string&
-//
-// Output Arguments:
-//		response	= std::string&
-//
-// Return Value:
-//		bool, true for success, false otherwise
-//
-//==========================================================================
-bool OAuth2Interface::DoCURLPost(const std::string &url, const std::string &data,
-	std::string &response) const
-{
-	CURL *curl = curl_easy_init();
-	if (!curl)
-	{
-		std::cerr << "Failed to initialize CURL" << std::endl;
-		return false;
-	}
-
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, OAuth2Interface::CURLWriteCallback);
-	response.clear();
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-	curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
-
-	if (!caCertificatePath.empty())
-		curl_easy_setopt(curl, CURLOPT_CAPATH, caCertificatePath.c_str());
-
-	if (verbose)
-		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-
-	curl_easy_setopt(curl, CURLOPT_POST, true);
-/*	char *urlEncodedData = curl_easy_escape(curl, data.c_str(), data.length());
-	if (!urlEncodedData)
-	{
-		std::cerr << "Failed to url-encode the data" << std::endl;
-		curl_easy_cleanup(curl);
-		return false;
-	}
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, urlEncodedData);
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(urlEncodedData));*/
-
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
-
-	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-	CURLcode result = curl_easy_perform(curl);
-
-//	curl_free(urlEncodedData);
-	if(result != CURLE_OK)
-	{
-		std::cerr << "Failed issuing https POST:  " << curl_easy_strerror(result) << "." << std::endl;
-		curl_easy_cleanup(curl);
-		return false;
-	}
-
-	curl_easy_cleanup(curl);
-	return true;
-}
-
-//==========================================================================
-// Class:			OAuth2Interface
 // Function:		ResponseContainsError
 //
 // Description:		Checks JSON array to see if there is an error entry.
@@ -354,6 +287,8 @@ bool OAuth2Interface::ResponseContainsError(const std::string &buffer)
 	if (!root)
 	{
 		std::cerr << "Failed to parse returned string (ResponseContainsError())" << std::endl;
+		if (verbose)
+			std::cerr << buffer << std::endl;
 		return true;
 	}
 
@@ -530,7 +465,7 @@ bool OAuth2Interface::HandleAccessRequestResponse(const std::string &buffer)
 //		std::string containing access token (or empty string on error)
 //
 //==========================================================================
-std::string OAuth2Interface::GetAccessToken(void)
+std::string OAuth2Interface::GetAccessToken()
 {
 	// TODO:  Better way to check if access token is valid?  It would be good to be able
 	// to request a new one after an API response with a 401 error.
@@ -542,8 +477,8 @@ std::string OAuth2Interface::GetAccessToken(void)
 
 	std::string readBuffer;
 	if (!DoCURLPost(tokenURL, AssembleAccessRequestQueryString(), readBuffer) ||
-	ResponseContainsError(readBuffer) ||
-	!HandleAccessRequestResponse(readBuffer))
+		ResponseContainsError(readBuffer) ||
+		!HandleAccessRequestResponse(readBuffer))
 	{
 		std::cerr << "Failed to obtain access token" << std::endl;
 		return "";
@@ -617,8 +552,8 @@ std::string OAuth2Interface::AssembleAccessRequestQueryString(const std::string 
 {
 	assert((!refreshToken.empty() || !code.empty()) &&
 		!clientID.empty() &&
-		!clientSecret.empty() &&
-		!grantType.empty());
+		!clientSecret.empty()/* &&
+		!grantType.empty()*/);
 
 	// Required fields
 	std::string queryString;
@@ -658,7 +593,7 @@ std::string OAuth2Interface::AssembleAccessRequestQueryString(const std::string 
 //		bool
 //
 //==========================================================================
-bool OAuth2Interface::RedirectURIIsLocal(void) const
+bool OAuth2Interface::RedirectURIIsLocal() const
 {
 	assert(!redirectURI.empty());
 	const std::string localURL("http://localhost");
@@ -682,11 +617,11 @@ bool OAuth2Interface::RedirectURIIsLocal(void) const
 //		int, contains port number or zero for error
 //
 //==========================================================================
-int OAuth2Interface::StripPortFromLocalRedirectURI(void) const
+int OAuth2Interface::StripPortFromLocalRedirectURI() const
 {
 	assert(RedirectURIIsLocal());
 
-	unsigned int colon = redirectURI.find(':');
+	size_t colon = redirectURI.find(':');
 	if (colon == std::string::npos)
 		return 0;
 
@@ -714,7 +649,7 @@ int OAuth2Interface::StripPortFromLocalRedirectURI(void) const
 //		std::string
 //
 //==========================================================================
-std::string OAuth2Interface::GenerateSecurityStateKey(void) const
+std::string OAuth2Interface::GenerateSecurityStateKey() const
 {
 	std::string stateKey;
 	while (stateKey.length() < 30)
@@ -758,125 +693,4 @@ std::string OAuth2Interface::Base36Encode(const LongLong &value)
 	std::reverse(buf.begin(), buf.end());
 
 	return buf;
-}
-
-//==========================================================================
-// Class:			OAuth2Interface
-// Function:		CURLWriteCallback
-//
-// Description:		Static member function for receiving returned data from cURL.
-//
-// Input Arguments:
-//		ptr			= char*
-//		size		= size_t indicating number of elements of size nmemb
-//		nmemb		= size_t indicating size of each element
-//		userData	= void* (must be pointer to std::string)
-//
-// Output Arguments:
-//		None
-//
-// Return Value:
-//		size_t indicating number of bytes read
-//
-//==========================================================================
-size_t OAuth2Interface::CURLWriteCallback(char *ptr, size_t size, size_t nmemb, void *userData)
-{
-	size_t totalSize = size * nmemb;
-//	((std::string*)userData)->clear();
-	((std::string*)userData)->append(ptr, totalSize);
-
-	return totalSize;
-}
-
-//==========================================================================
-// Class:			OAuth2Interface
-// Function:		ReadJSON
-//
-// Description:		Reads the specified field from the JSON array.
-//
-// Input Arguments:
-//		root	= cJSON*
-//		field	= std::string
-//
-// Output Arguments:
-//		value	= int&
-//
-// Return Value:
-//		bool, true for success, false otherwise
-//
-//==========================================================================
-bool OAuth2Interface::ReadJSON(cJSON *root, std::string field, int &value) const
-{
-	cJSON *element = cJSON_GetObjectItem(root, field.c_str());
-	if (!element)
-	{
-		//std::cerr << "Failed to read field '" << field << "' from JSON array" << std::endl;
-		return false;
-	}
-
-	value = element->valueint;
-
-	return true;
-}
-
-//==========================================================================
-// Class:			OAuth2Interface
-// Function:		ReadJSON
-//
-// Description:		Reads the specified field from the JSON array.
-//
-// Input Arguments:
-//		root	= cJSON*
-//		field	= std::string
-//
-// Output Arguments:
-//		value	= std::string&
-//
-// Return Value:
-//		bool, true for success, false otherwise
-//
-//==========================================================================
-bool OAuth2Interface::ReadJSON(cJSON *root, std::string field, std::string &value) const
-{
-	cJSON *element = cJSON_GetObjectItem(root, field.c_str());
-	if (!element)
-	{
-		//std::cerr << "Failed to read field '" << field << "' from JSON array" << std::endl;
-		return false;
-	}
-
-	value = element->valuestring;
-
-	return true;
-}
-
-//==========================================================================
-// Class:			OAuth2Interface
-// Function:		ReadJSON
-//
-// Description:		Reads the specified field from the JSON array.
-//
-// Input Arguments:
-//		root	= cJSON*
-//		field	= std::string
-//
-// Output Arguments:
-//		value	= double&
-//
-// Return Value:
-//		bool, true for success, false otherwise
-//
-//==========================================================================
-bool OAuth2Interface::ReadJSON(cJSON *root, std::string field, double &value) const
-{
-	cJSON *element = cJSON_GetObjectItem(root, field.c_str());
-	if (!element)
-	{
-		//std::cerr << "Failed to read field '" << field << "' from JSON array" << std::endl;
-		return false;
-	}
-
-	value = element->valuedouble;
-
-	return true;
 }
