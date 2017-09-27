@@ -13,7 +13,6 @@
 
 // utilities headers
 #include "jsonInterface.h"
-#include "portable.h"
 
 // cJSON (local) forward declarations
 struct cJSON;
@@ -40,7 +39,7 @@ public:
 	std::string GetRefreshToken() const { return refreshToken; }
 	std::string GetAccessToken();
 
-	static std::string Base36Encode(const LongLong &value);
+	static std::string Base36Encode(const int64_t &value);
 
 private:
 	OAuth2Interface();

@@ -653,8 +653,8 @@ std::string OAuth2Interface::GenerateSecurityStateKey() const
 {
 	std::string stateKey;
 	while (stateKey.length() < 30)
-		stateKey.append(Base36Encode((LongLong)rand()
-			* (LongLong)rand() * (LongLong)rand() * (LongLong)rand()));
+		stateKey.append(Base36Encode((int64_t)rand()
+			* (int64_t)rand() * (int64_t)rand() * (int64_t)rand()));
 
 	return stateKey;
 }
@@ -666,7 +666,7 @@ std::string OAuth2Interface::GenerateSecurityStateKey() const
 // Description:		Encodes the specified value in base36.
 //
 // Input Arguments:
-//		value	= const LongLong&
+//		value	= const int64_t&
 //
 // Output Arguments:
 //		None
@@ -675,14 +675,14 @@ std::string OAuth2Interface::GenerateSecurityStateKey() const
 //		std::string
 //
 //==========================================================================
-std::string OAuth2Interface::Base36Encode(const LongLong &value)
+std::string OAuth2Interface::Base36Encode(const int64_t &value)
 {
 	const unsigned int maxDigits(35);
 	const char* charset = "abcdefghijklmnopqrstuvwxyz0123456789";
 	std::string buf;
 	buf.reserve(maxDigits);
 
-	LongLong v(value);
+	int64_t v(value);
 
 	do
 	{
