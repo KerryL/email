@@ -44,7 +44,6 @@
 //==========================================================================
 JSONInterface::JSONInterface(const std::string& userAgent) : userAgent(userAgent)
 {
-	verbose = false;
 }
 
 //==========================================================================

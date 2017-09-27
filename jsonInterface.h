@@ -16,7 +16,7 @@ class JSONInterface
 {
 public:
 	JSONInterface(const std::string& userAgent = "");
-	virtual ~JSONInterface() {}
+	virtual ~JSONInterface() = default;
 
 	void SetCACertificatePath(const std::string& path) { caCertificatePath = path; }
 	void SetVerboseOutput(const bool& verboseOutput = true) { verbose = verboseOutput; }
@@ -26,7 +26,7 @@ private:
 
 protected:
 	std::string caCertificatePath;
-	bool verbose;
+	bool verbose = false;
 
 	bool DoCURLPost(const std::string &url, const std::string &data,
 		std::string &response) const;
