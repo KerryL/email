@@ -24,7 +24,6 @@
 
 // Local headers
 #include "jsonInterface.h"
-#include "cJSON.h"
 
 //==========================================================================
 // Class:			JSONInterface
@@ -319,4 +318,48 @@ bool JSONInterface::ReadJSON(cJSON *root, const std::string& field, double &valu
 	value = element->valuedouble;
 
 	return true;
+}
+
+//==========================================================================
+// Class:			JSONInterface
+// Function:		URLEncode
+//
+// Description:		Encodes special characters as required to conform to the W3
+//					Uniform Resource Identifier specification.
+//
+// Input Arguments:
+//		root	= cJSON*
+//		field	= const std::string&
+//
+// Output Arguments:
+//		value	= double&
+//
+// Return Value:
+//		bool, true for success, false otherwise
+//
+//==========================================================================
+std::string JSONInterface::URLEncode(const std::string& s)
+{
+	std::string encoded;
+	for (const auto& c : s)
+	{
+		if (c == ' ')
+			encoded.append("%20");
+		else if (c == '"')
+			encoded.append("%22");
+		else if (c == '<')
+			encoded.append("%3C");
+		else if (c == '>')
+			encoded.append("%3E");
+		else if (c == '#')
+			encoded.append("%23");
+		else if (c == '%')
+			encoded.append("%25");
+		else if (c == '|')
+			encoded.append("%7C");
+		else
+			encoded.append(std::string(&c, 1));
+	}
+
+	return encoded;
 }
