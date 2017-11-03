@@ -24,7 +24,6 @@
 
 // Local headers
 #include "oAuth2Interface.h"
-#include "cJSON.h"
 
 //==========================================================================
 // Class:			OAuth2Interface
