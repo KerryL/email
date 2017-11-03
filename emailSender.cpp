@@ -30,7 +30,7 @@
 #include "oAuth2Interface.h"
 
 // rpi headers
-#include "rpi/timingUtility.h"
+#include "utilities/timingUtility.h"
 
 //==========================================================================
 // Class:			EmailSender
@@ -470,10 +470,12 @@ std::string EmailSender::GetDateString()
 std::string EmailSender::GenerateMessageID() const
 {
 	std::string id("<");
-	id.append(OAuth2Interface::Base36Encode(TimingUtility::GetMillisecondsSinceEpoch()));
+	id.append(OAuth2Interface::Base36Encode(
+		std::chrono::duration_cast<std::chrono::milliseconds>(
+		TimingUtility::Clock::now().time_since_epoch()).count()));
 	id.append(".");
-	id.append(OAuth2Interface::Base36Encode((LongLong)rand() * (LongLong)rand()
-		* (LongLong)rand() * (LongLong)rand()));
+	id.append(OAuth2Interface::Base36Encode((int64_t)rand() * (int64_t)rand()
+		* (int64_t)rand() * (int64_t)rand()));
 	id.append("@");
 	id.append(ExtractDomain(loginInfo.localEmail));
 	id.append(">");
@@ -499,10 +501,10 @@ std::string EmailSender::GenerateMessageID() const
 //==========================================================================
 std::string EmailSender::GenerateBoundryID()
 {
-	return OAuth2Interface::Base36Encode((LongLong)rand() * (LongLong)rand()
-		* (LongLong)rand() * (LongLong)rand()
-		* (LongLong)rand() * (LongLong)rand()
-		* (LongLong)rand() * (LongLong)rand());
+	return OAuth2Interface::Base36Encode((int64_t)rand() * (int64_t)rand()
+		* (int64_t)rand() * (int64_t)rand()
+		* (int64_t)rand() * (int64_t)rand()
+		* (int64_t)rand() * (int64_t)rand());
 }
 
 //==========================================================================
