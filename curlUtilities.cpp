@@ -6,6 +6,9 @@
 // Local headers
 #include "curlUtilities.h"
 
+// Standard C++ headers
+#include <iostream>
+
 //==========================================================================
 // Class:			CURLUtilities
 // Function:		CURLCallHasError

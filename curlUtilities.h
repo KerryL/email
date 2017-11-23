@@ -9,6 +9,9 @@
 // libCURL headers
 #include <curl/curl.h>
 
+// Standard C++ headers
+#include <string>
+
 namespace CURLUtilities
 {
 	bool CURLCallHasError(const CURLcode& result, const std::string& message);
