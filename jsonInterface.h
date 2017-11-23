@@ -7,7 +7,7 @@
 #define JSON_INTERFACE_H_
 
 // Local headers
-#include "cJSON.h"
+#include "cJSON/cJSON.h"
 
 // Standard C++ headers
 #include <string>
