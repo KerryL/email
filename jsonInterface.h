@@ -12,6 +12,7 @@
 // Standard C++ headers
 #include <string>
 #include <vector>
+#include <ctime>
 
 // cJSON forward declarations
 struct cJSON;
@@ -36,10 +37,12 @@ protected:
 		std::string &response) const;
 	bool DoCURLGet(const std::string &url, std::string &response) const;
 
-	static bool ReadJSON(cJSON *root, const std::string& field, int &value);
-	static bool ReadJSON(cJSON *root, const std::string& field, unsigned int &value);
-	static bool ReadJSON(cJSON *root, const std::string& field, std::string &value);
-	static bool ReadJSON(cJSON *root, const std::string& field, double &value);
+	static bool ReadJSON(cJSON* root, const std::string& field, int& value);
+	static bool ReadJSON(cJSON* root, const std::string& field, unsigned int& value);
+	static bool ReadJSON(cJSON* root, const std::string& field, std::string &value);
+	static bool ReadJSON(cJSON* root, const std::string& field, double& value);
+	static bool ReadJSON(cJSON* root, const std::string& field, std::tm& value);
+	static bool ReadJSON(cJSON* root, const std::string& field, bool& value);
 
 	template <typename T>
 	static bool ReadJSON(cJSON *root, const std::string& field, std::vector<T>& v);

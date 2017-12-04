@@ -10,6 +10,7 @@
 #include <sstream>
 #include <ctime>
 #include <algorithm>
+#include <iomanip>
 
 // Standard C headers
 #include <string.h>
@@ -316,6 +317,73 @@ bool JSONInterface::ReadJSON(cJSON *root, const std::string& field, double &valu
 	}
 
 	value = element->valuedouble;
+
+	return true;
+}
+
+//==========================================================================
+// Class:			JSONInterface
+// Function:		ReadJSON
+//
+// Description:		Reads the specified field from the JSON array.
+//
+// Input Arguments:
+//		root	= cJSON*
+//		field	= const std::string&
+//
+// Output Arguments:
+//		value	= std::chrono::steady_clock::time_point&
+//
+// Return Value:
+//		bool, true for success, false otherwise
+//
+//==========================================================================
+bool JSONInterface::ReadJSON(cJSON *root, const std::string& field, std::tm &value)
+{
+	cJSON *element = cJSON_GetObjectItem(root, field.c_str());
+	if (!element)
+	{
+		//std::cerr << "Failed to read field '" << field << "' from JSON array" << std::endl;
+		return false;
+	}
+
+	std::istringstream ss(element->valuestring);
+	if ((ss >> std::get_time(&value, "%Y-%m-%d %H:%M")).fail())
+	{
+		//std::cerr << "Failed to parse data for field '" << field << "'\n";
+		return false;
+	}
+
+	return true;
+}
+
+//==========================================================================
+// Class:			JSONInterface
+// Function:		ReadJSON
+//
+// Description:		Reads the specified field from the JSON array.
+//
+// Input Arguments:
+//		root	= cJSON*
+//		field	= const std::string&
+//
+// Output Arguments:
+//		value	= bool&
+//
+// Return Value:
+//		bool, true for success, false otherwise
+//
+//==========================================================================
+bool JSONInterface::ReadJSON(cJSON *root, const std::string& field, bool &value)
+{
+	cJSON *element = cJSON_GetObjectItem(root, field.c_str());
+	if (!element)
+	{
+		//std::cerr << "Failed to read field '" << field << "' from JSON array" << std::endl;
+		return false;
+	}
+
+	value = element->valueint == 1;
 
 	return true;
 }
