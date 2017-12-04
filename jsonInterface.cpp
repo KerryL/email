@@ -431,3 +431,4 @@ std::string JSONInterface::URLEncode(const std::string& s)
 
 	return encoded;
 }
+
