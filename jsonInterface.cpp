@@ -348,7 +348,13 @@ bool JSONInterface::ReadJSON(cJSON *root, const std::string& field, std::tm &val
 	}
 
 	std::istringstream ss(element->valuestring);
-	if ((ss >> std::get_time(&value, "%Y-%m-%d %H:%M")).fail())
+	// Possible bug in MSVC's implemention of std::get_time (in 2015 and 2017)
+	// Doesn't like format strings longer than actual string
+	const std::string format("%Y-%m-%d %H:%M");
+	const size_t formatLength(11);// Minimum possible length of input string to successfully fill out this format
+	if (ss.str().length() < formatLength)
+		return false;
+	if ((ss >> std::get_time(&value, format.c_str())).fail())
 	{
 		//std::cerr << "Failed to parse data for field '" << field << "'\n";
 		return false;
