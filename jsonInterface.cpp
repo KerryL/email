@@ -438,3 +438,41 @@ std::string JSONInterface::URLEncode(const std::string& s)
 	return encoded;
 }
 
+//==========================================================================
+// Class:			JSONInterface
+// Function:		ReadJSONArrayToVector
+//
+// Description:		Reads JSON array into vector using each array entry as
+//					a vector element.
+//
+// Input Arguments:
+//		root	= cJSON*
+//		field	= const std::string&
+//
+// Output Arguments:
+//		v		= std::vector<std::string>&
+//
+// Return Value:
+//		bool, true for success, false otherwise
+//
+//==========================================================================
+bool JSONInterface::ReadJSONArrayToVector(cJSON *root, const std::string& field, std::vector<std::string>& v)
+{
+	cJSON* arrayParent(cJSON_GetObjectItem(root, field.c_str()));
+	if (!arrayParent)
+		return false;
+
+	v.resize(cJSON_GetArraySize(arrayParent));
+	unsigned int i(0);
+	for (auto& item : v)
+	{
+		cJSON* arrayItem(cJSON_GetArrayItem(arrayParent, i));
+		if (!arrayItem)
+			return false;
+
+		item = arrayItem->valuestring;
+		++i;
+	}
+
+	return true;
+}

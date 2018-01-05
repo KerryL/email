@@ -47,6 +47,8 @@ protected:
 	template <typename T>
 	static bool ReadJSON(cJSON *root, const std::string& field, std::vector<T>& v);
 
+	static bool ReadJSONArrayToVector(cJSON *root, const std::string& field, std::vector<std::string>& v);
+
 	static size_t CURLWriteCallback(char *ptr, size_t size, size_t nmemb, void *userData);
 
 	static std::string URLEncode(const std::string& s);
@@ -55,17 +57,18 @@ protected:
 template <typename T>
 bool JSONInterface::ReadJSON(cJSON *root, const std::string& field, std::vector<T>& v)
 {
-	const unsigned int arraySize(cJSON_GetArraySize(root));
-	unsigned int i;
-	for (i = 0; i < arraySize; ++i)
+	v.resize(cJSON_GetArraySize(root));
+	unsigned int i(0);
+	for (auto& item : v)
 	{
 		cJSON* arrayItem(cJSON_GetArrayItem(root, i));
-
-		T value;
-		if (!ReadJSON(arrayItem, field, value))
+		if (!arrayItem)
 			return false;
 
-		v.push_back(value);
+		if (!ReadJSON(arrayItem, field, item))
+			return false;
+
+		++i;
 	}
 
 	return true;
