@@ -31,18 +31,24 @@ public:
 
 private:
 	const std::string userAgent;
-	static bool DoNothing(CURL*) { return true; }
 
 protected:
 	std::string caCertificatePath;
 	bool verbose = false;
 
-	typedef bool (*CURLModification)(CURL*);
+	struct ModificationData
+	{
+	};
+
+	typedef bool (*CURLModification)(CURL*, const ModificationData*);
+	static bool DoNothing(CURL*, const ModificationData*) { return true; }
 
 	bool DoCURLPost(const std::string &url, const std::string &data,
-		std::string &response, CURLModification curlModification = &JSONInterface::DoNothing) const;
+		std::string &response, CURLModification curlModification = &JSONInterface::DoNothing,
+		const ModificationData* modificationData = nullptr) const;
 	bool DoCURLGet(const std::string &url, std::string &response,
-		CURLModification curlModification  = &JSONInterface::DoNothing) const;
+		CURLModification curlModification  = &JSONInterface::DoNothing,
+		const ModificationData* modificationData = nullptr) const;
 
 	static bool ReadJSON(cJSON* root, const std::string& field, int& value);
 	static bool ReadJSON(cJSON* root, const std::string& field, unsigned int& value);

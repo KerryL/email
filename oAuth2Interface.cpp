@@ -425,9 +425,10 @@ bool OAuth2Interface::HandleAccessRequestResponse(const std::string &buffer)
 	}
 
 	std::string tokenType;
+	unsigned int tokenValidDuration;// [sec]
 	if (!ReadJSON(root, "access_token", accessToken) ||
 		!ReadJSON(root, "token_type", tokenType) ||
-		!ReadJSON(root, "expires_in", accessTokenValidTime))
+		!ReadJSON(root, "expires_in", tokenValidDuration))
 	{
 		std::cerr << "Failed to read all required fields from server" << std::endl;
 		cJSON_Delete(root);
@@ -441,7 +442,7 @@ bool OAuth2Interface::HandleAccessRequestResponse(const std::string &buffer)
 		return false;
 	}
 
-	accessTokenObtainedTime = time(NULL);
+	accessTokenValidUntilTime = std::chrono::system_clock::now() + std::chrono::seconds(tokenValidDuration);
 
 	cJSON_Delete(root);
 	return true;
@@ -468,8 +469,7 @@ std::string OAuth2Interface::GetAccessToken()
 {
 	// TODO:  Better way to check if access token is valid?  It would be good to be able
 	// to request a new one after an API response with a 401 error.
-	time_t now = time(NULL);
-	if (!accessToken.empty() && difftime(now, accessTokenObtainedTime) < accessTokenValidTime)
+	if (!accessToken.empty() && std::chrono::system_clock::now() < accessTokenValidUntilTime)
 		return accessToken;
 
 	std::cout << "Access token is invalid - requesting a new one" << std::endl;

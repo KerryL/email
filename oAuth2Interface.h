@@ -9,7 +9,7 @@
 
 // Standard C++ headers
 #include <string>
-#include <ctime>
+#include <chrono>
 
 // utilities headers
 #include "jsonInterface.h"
@@ -80,10 +80,7 @@ private:
 	bool IsLimitedInput() { return redirectURI.empty(); };
 	int StripPortFromLocalRedirectURI() const;
 
-	// timing information to determine if we need to request a new code
-
-	time_t accessTokenObtainedTime;
-	double accessTokenValidTime;// [sec]
+	std::chrono::system_clock::time_point accessTokenValidUntilTime;
 
 	static OAuth2Interface *singleton;
 };
