@@ -82,13 +82,13 @@ bool JSONInterface::DoCURLPost(const String &url, const String &data,
 	curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
 
 	if (!caCertificatePath.empty())
-		curl_easy_setopt(curl, CURLOPT_CAPATH, caCertificatePath.c_str());
+		curl_easy_setopt(curl, CURLOPT_CAPATH, UString::ToNarrowString<String>(caCertificatePath).c_str());
 
 	if (verbose)
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
 	if (!userAgent.empty())
-		curl_easy_setopt(curl, CURLOPT_USERAGENT, userAgent.c_str());
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, UString::ToNarrowString<String>(userAgent).c_str());
 
 	curl_easy_setopt(curl, CURLOPT_POST, true);
 /*	char *urlEncodedData = curl_easy_escape(curl, data.c_str(), data.length());
@@ -101,13 +101,14 @@ bool JSONInterface::DoCURLPost(const String &url, const String &data,
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, urlEncodedData);
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(urlEncodedData));*/
 
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
+	const std::string postData(UString::ToNarrowString<String>(data));
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData.c_str());
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, postData.length());
 
 	if (!curlModification(curl, modificationData))
 		return false;
 
-	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+	curl_easy_setopt(curl, CURLOPT_URL, UString::ToNarrowString<String>(url).c_str());
 	CURLcode result = curl_easy_perform(curl);
 
 //	curl_free(urlEncodedData);
@@ -155,10 +156,10 @@ bool JSONInterface::DoCURLGet(const String &url, String &response,
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
 	if (!caCertificatePath.empty())
-		curl_easy_setopt(curl, CURLOPT_CAPATH, caCertificatePath.c_str());
+		curl_easy_setopt(curl, CURLOPT_CAPATH, UString::ToNarrowString<String>(caCertificatePath).c_str());
 
 	if (!userAgent.empty())
-		curl_easy_setopt(curl, CURLOPT_USERAGENT, userAgent.c_str());
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, UString::ToNarrowString<String>(userAgent).c_str());
 
 	if (verbose)
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
@@ -166,7 +167,7 @@ bool JSONInterface::DoCURLGet(const String &url, String &response,
 	if (!curlModification(curl, modificationData))
 		return false;
 
-	curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+	curl_easy_setopt(curl, CURLOPT_URL, UString::ToNarrowString<String>(url).c_str());
 	CURLcode result = curl_easy_perform(curl);
 
 	if(result != CURLE_OK)
