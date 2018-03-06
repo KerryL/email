@@ -140,7 +140,7 @@ void OAuth2Interface::Destroy()
 //					information from the user to obtain a valid token.
 //
 // Input Arguments:
-//		refreshToken	= const std::string&
+//		refreshToken	= const String&
 //
 // Output Arguments:
 //		None
@@ -149,7 +149,7 @@ void OAuth2Interface::Destroy()
 //		None
 //
 //==========================================================================
-void OAuth2Interface::SetRefreshToken(const std::string &refreshTokenIn)
+void OAuth2Interface::SetRefreshToken(const String &refreshTokenIn)
 {
 	// If the token isn't valid, request one, otherwise, use it as-is
 	if (refreshTokenIn.length() < 2)// TODO:  Better way to tell if it's valid?
@@ -171,28 +171,28 @@ void OAuth2Interface::SetRefreshToken(const std::string &refreshTokenIn)
 //		None
 //
 // Return Value:
-//		std::string containing refresh token, or emtpy string on error
+//		String containing refresh token, or emtpy string on error
 //
 //==========================================================================
-std::string OAuth2Interface::RequestRefreshToken()
+String OAuth2Interface::RequestRefreshToken()
 {
 	assert(!authURL.empty() &&
 		!tokenURL.empty());
 
 	if (IsLimitedInput())
 	{
-		std::string readBuffer;
+		String readBuffer;
 		if (!DoCURLPost(authURL, AssembleRefreshRequestQueryString(), readBuffer))
-			return "";
+			return String();
 
 		if (ResponseContainsError(readBuffer))
-			return "";
+			return String();
 
 		AuthorizationResponse authResponse;
 		if (!HandleAuthorizationRequestResponse(readBuffer, authResponse))
-			return "";
+			return String();
 
-		std::string queryString = AssembleAccessRequestQueryString(authResponse.deviceCode);
+		String queryString = AssembleAccessRequestQueryString(authResponse.deviceCode);
 
 		time_t startTime = time(NULL);
 		time_t now = startTime;
@@ -206,23 +206,23 @@ std::string OAuth2Interface::RequestRefreshToken()
 			now = time(NULL);
 			if (difftime(now, startTime) > authResponse.expiresIn)
 			{
-				std::cerr << "Request timed out - restart application to start again" << std::endl;
-				return "";
+				Cerr << "Request timed out - restart application to start again\n";
+				return String();
 			}
 
 			if (!DoCURLPost(tokenURL, queryString, readBuffer))
-				return "";
+				return String();
 
 			if (ResponseContainsError(readBuffer))
-				return "";
+				return String();
 		}
 	}
 	else
 	{
 		assert(!responseType.empty());
 
-		std::string stateKey = "";//GenerateSecurityStateKey();// Not sure why it doesn't work with the state key...
-		std::string readBuffer;
+		String stateKey;// = GenerateSecurityStateKey();// Not sure why it doesn't work with the state key...
+		String readBuffer;
 		
 		// TODO:  Alternatively, we can pop up a browser, wait for the user
 		// to verify permissions, then grab the result ourselves, without
@@ -231,10 +231,10 @@ std::string OAuth2Interface::RequestRefreshToken()
 		// The benefit of doing it the way we're doing it now, though, is
 		// that the browser used to authenticate does not need to be on the
 		// same machine that is running this application.
-		std::cout << "Enter this address in your browser:" << std::endl
+		Cout << "Enter this address in your browser:" << std::endl
 			<< authURL << "?" << AssembleRefreshRequestQueryString(stateKey) << std::endl;
 
-		std::string authorizationCode;
+		String authorizationCode;
 		if (RedirectURIIsLocal())
 		{
 			// TODO:  What now?  Need to receive authorization code by listening to appropriate port?
@@ -246,20 +246,20 @@ std::string OAuth2Interface::RequestRefreshToken()
 		{
 			// TODO:  Grab verification code automatically (see note above
 			// prior to "Enter this address...")
-			std::cout << "Enter verification code:" << std::endl;
-			std::cin >> authorizationCode;
+			Cout << "Enter verification code:" << std::endl;
+			Cin >> authorizationCode;
 		}
 
 		if (!DoCURLPost(tokenURL, AssembleAccessRequestQueryString(authorizationCode), readBuffer) ||
 			ResponseContainsError(readBuffer) ||
 			!HandleRefreshRequestResponse(readBuffer))
 		{
-			std::cerr << "Failed to obtain refresh token" << std::endl;
-			return "";
+			Cerr << "Failed to obtain refresh token\n";
+			return String();
 		}
 	}
 
-	std::cout << "Successfully obtained refresh token" << std::endl;
+	Cout << "Successfully obtained refresh token" << std::endl;
 	return refreshToken;
 }
 
@@ -271,7 +271,7 @@ std::string OAuth2Interface::RequestRefreshToken()
 //					"Authorization pending" errors are not considered errors.
 //
 // Input Arguments:
-//		buffer		= const std::string & containing JSON string
+//		buffer		= const String & containing JSON string
 //
 // Output Arguments:
 //		None
@@ -280,27 +280,27 @@ std::string OAuth2Interface::RequestRefreshToken()
 //		bool, true for error, false otherwise
 //
 //==========================================================================
-bool OAuth2Interface::ResponseContainsError(const std::string &buffer)
+bool OAuth2Interface::ResponseContainsError(const String &buffer)
 {
-	cJSON *root = cJSON_Parse(buffer.c_str());
+	cJSON *root(cJSON_Parse(UString::ToNarrowString<String>(buffer).c_str()));
 	if (!root)
 	{
-		std::cerr << "Failed to parse returned string (ResponseContainsError())" << std::endl;
+		Cerr << "Failed to parse returned string (ResponseContainsError())\n";
 		if (verbose)
-			std::cerr << buffer << std::endl;
+			Cerr << buffer << '\n';
 		return true;
 	}
 
-	std::string error;
-	if (ReadJSON(root, "error", error))
+	String error;
+	if (ReadJSON(root, _T("error"), error))
 	{
-		if (error.compare("authorization_pending") != 0)
+		if (error.compare(_T("authorization_pending")) != 0)
 		{
-			std::cerr << "Recieved error from OAuth server:  " << error;
-			std::string description;
-			if (ReadJSON(root, "error_description", description))
-				std::cerr << " - " << description;
-			std::cerr << std::endl;
+			Cerr << "Recieved error from OAuth server:  " << error;
+			String description;
+			if (ReadJSON(root, _T("error_description"), description))
+				Cerr << " - " << description;
+			Cerr << '\n';
 			cJSON_Delete(root);
 			return true;
 		}
@@ -319,7 +319,7 @@ bool OAuth2Interface::ResponseContainsError(const std::string &buffer)
 //					devices only.
 //
 // Input Arguments:
-//		buffer		= const std::string & containing JSON string
+//		buffer		= const String & containing JSON string
 //
 // Output Arguments:
 //		response	= AuthorizationResponse&
@@ -329,32 +329,32 @@ bool OAuth2Interface::ResponseContainsError(const std::string &buffer)
 //
 //==========================================================================
 bool OAuth2Interface::HandleAuthorizationRequestResponse(
-	const std::string &buffer, AuthorizationResponse &response)
+	const String &buffer, AuthorizationResponse &response)
 {
 	assert(IsLimitedInput());
 
-	cJSON *root = cJSON_Parse(buffer.c_str());
+	cJSON *root(cJSON_Parse(UString::ToNarrowString<String>(buffer).c_str()));
 	if (!root)
 	{
-		std::cerr << "Failed to parse returned string (HandleAuthorizationRequestResponse())" << std::endl;
+		Cerr << "Failed to parse returned string (HandleAuthorizationRequestResponse())\n";
 		return false;
 	}
 
-	std::string userCode, verificationURL;
+	String userCode, verificationURL;
 
 	// TODO:  Check state key?
-	if (!ReadJSON(root, "device_code", response.deviceCode) ||
-		!ReadJSON(root, "user_code", userCode) ||
-		!ReadJSON(root, "verification_url", verificationURL) ||
-		!ReadJSON(root, "expires_in", response.expiresIn) ||
-		!ReadJSON(root, "interval", response.interval))
+	if (!ReadJSON(root, _T("device_code"), response.deviceCode) ||
+		!ReadJSON(root, _T("user_code"), userCode) ||
+		!ReadJSON(root, _T("verification_url"), verificationURL) ||
+		!ReadJSON(root, _T("expires_in"), response.expiresIn) ||
+		!ReadJSON(root, _T("interval"), response.interval))
 	{
 		cJSON_Delete(root);
 		return false;
 	}
 
-	std::cout << "Please visit this URL: " << std::endl << verificationURL << std::endl;
-	std::cout << "And enter this code (case sensitive):" << std::endl << userCode << std::endl;
+	Cout << "Please visit this URL: " << std::endl << verificationURL << std::endl;
+	Cout << "And enter this code (case sensitive):" << std::endl << userCode << std::endl;
 
 	cJSON_Delete(root);
 	return true;
@@ -367,7 +367,7 @@ bool OAuth2Interface::HandleAuthorizationRequestResponse(
 // Description:		Processes JSON responses from server.
 //
 // Input Arguments:
-//		buffer	= const std::string & containing JSON string
+//		buffer	= const String & containing JSON string
 //
 // Output Arguments:
 //		None
@@ -376,21 +376,21 @@ bool OAuth2Interface::HandleAuthorizationRequestResponse(
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-bool OAuth2Interface::HandleRefreshRequestResponse(const std::string &buffer, const bool &silent)
+bool OAuth2Interface::HandleRefreshRequestResponse(const String &buffer, const bool &silent)
 {
-	cJSON *root = cJSON_Parse(buffer.c_str());
+	cJSON *root = cJSON_Parse(UString::ToNarrowString<String>(buffer).c_str());
 	if (!root)
 	{
 		if (!silent)
-			std::cerr << "Failed to parse returned string (HandleRefreshRequsetResponse())" << std::endl;
+			Cerr << "Failed to parse returned string (HandleRefreshRequsetResponse())\n";
 		return false;
 	}
 
-	std::string tokenType;
-	if (!ReadJSON(root, "refresh_token", refreshToken))
+	String tokenType;
+	if (!ReadJSON(root, _T("refresh_token"), refreshToken))
 	{
 		if (!silent)
-			std::cerr << "Failed to read refresh token field from server" << std::endl;
+			Cerr << "Failed to read refresh token field from server" << std::endl;
 		cJSON_Delete(root);
 		return false;
 	}
@@ -406,7 +406,7 @@ bool OAuth2Interface::HandleRefreshRequestResponse(const std::string &buffer, co
 // Description:		Processes JSON responses from server.
 //
 // Input Arguments:
-//		buffer	= const std::string & containing JSON string
+//		buffer	= const String & containing JSON string
 //
 // Output Arguments:
 //		None
@@ -415,29 +415,29 @@ bool OAuth2Interface::HandleRefreshRequestResponse(const std::string &buffer, co
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-bool OAuth2Interface::HandleAccessRequestResponse(const std::string &buffer)
+bool OAuth2Interface::HandleAccessRequestResponse(const String &buffer)
 {
-	cJSON *root = cJSON_Parse(buffer.c_str());
+	cJSON *root = cJSON_Parse(UString::ToNarrowString<String>(buffer).c_str());
 	if (!root)
 	{
-		std::cerr << "Failed to parse returned string (HandleAccessRequestResponse())" << std::endl;
+		Cerr << "Failed to parse returned string (HandleAccessRequestResponse())\n";
 		return false;
 	}
 
-	std::string tokenType;
+	String tokenType;
 	unsigned int tokenValidDuration;// [sec]
-	if (!ReadJSON(root, "access_token", accessToken) ||
-		!ReadJSON(root, "token_type", tokenType) ||
-		!ReadJSON(root, "expires_in", tokenValidDuration))
+	if (!ReadJSON(root, _T("access_token"), accessToken) ||
+		!ReadJSON(root, _T("token_type"), tokenType) ||
+		!ReadJSON(root, _T("expires_in"), tokenValidDuration))
 	{
-		std::cerr << "Failed to read all required fields from server" << std::endl;
+		Cerr << "Failed to read all required fields from server\n";
 		cJSON_Delete(root);
 		return false;
 	}
 
-	if (tokenType.compare("Bearer") != 0)
+	if (tokenType.compare(_T("Bearer")) != 0)
 	{
-		std::cerr << "Expected token type 'Bearer', received '" << tokenType << "'" << std::endl;
+		Cerr << "Expected token type 'Bearer', received '" << tokenType << "'\n";
 		cJSON_Delete(root);
 		return false;
 	}
@@ -462,28 +462,28 @@ bool OAuth2Interface::HandleAccessRequestResponse(const std::string &buffer)
 //		None
 //
 // Return Value:
-//		std::string containing access token (or empty string on error)
+//		String containing access token (or empty string on error)
 //
 //==========================================================================
-std::string OAuth2Interface::GetAccessToken()
+String OAuth2Interface::GetAccessToken()
 {
 	// TODO:  Better way to check if access token is valid?  It would be good to be able
 	// to request a new one after an API response with a 401 error.
 	if (!accessToken.empty() && std::chrono::system_clock::now() < accessTokenValidUntilTime)
 		return accessToken;
 
-	std::cout << "Access token is invalid - requesting a new one" << std::endl;
+	Cout << "Access token is invalid - requesting a new one" << std::endl;
 
-	std::string readBuffer;
+	String readBuffer;
 	if (!DoCURLPost(tokenURL, AssembleAccessRequestQueryString(), readBuffer) ||
 		ResponseContainsError(readBuffer) ||
 		!HandleAccessRequestResponse(readBuffer))
 	{
-		std::cerr << "Failed to obtain access token" << std::endl;
-		return "";
+		Cerr << "Failed to obtain access token" << std::endl;
+		return String();
 	}
 
-	std::cout << "Successfully obtained new access token" << std::endl;
+	Cout << "Successfully obtained new access token" << std::endl;
 	return accessToken;
 }
 
@@ -495,37 +495,37 @@ std::string OAuth2Interface::GetAccessToken()
 //					refresh token.
 //
 // Input Arguments:
-//		state	= const std::string&, anti-forgery state key
+//		state	= const String&, anti-forgery state key
 //
 // Output Arguments:
 //		None
 //
 // Return Value:
-//		std::string containing access token (or empty string on error)
+//		String containing access token (or empty string on error)
 //
 //==========================================================================
-std::string OAuth2Interface::AssembleRefreshRequestQueryString(const std::string& state) const
+String OAuth2Interface::AssembleRefreshRequestQueryString(const String& state) const
 {
 	assert(!clientID.empty() &&
 		!scope.empty());
 
 	// Required fields
-	std::string queryString;
-	queryString.append("client_id=" + clientID);
-	queryString.append("&scope=" + scope);
+	String queryString;
+	queryString.append(_T("client_id=") + clientID);
+	queryString.append(_T("&scope=") + scope);
 
 	// Optional fields
 	if (!loginHint.empty())
-		queryString.append("&login_hint=" + loginHint);
+		queryString.append(_T("&login_hint=") + loginHint);
 
 	if (!responseType.empty())
-		queryString.append("&response_type=" + responseType);
+		queryString.append(_T("&response_type=") + responseType);
 
 	if (!redirectURI.empty())
-		queryString.append("&redirect_uri=" + redirectURI);
+		queryString.append(_T("&redirect_uri=") + redirectURI);
 
 	if (!state.empty())
-		queryString.append("&state=" + state);
+		queryString.append(_T("&state=") + state);
 
 	return queryString;
 }
@@ -538,16 +538,16 @@ std::string OAuth2Interface::AssembleRefreshRequestQueryString(const std::string
 //					token.
 //
 // Input Arguments:
-//		code	= const std::string&
+//		code	= const String&
 //
 // Output Arguments:
 //		None
 //
 // Return Value:
-//		std::string containing access token (or empty string on error)
+//		String containing access token (or empty string on error)
 //
 //==========================================================================
-std::string OAuth2Interface::AssembleAccessRequestQueryString(const std::string &code) const
+String OAuth2Interface::AssembleAccessRequestQueryString(const String &code) const
 {
 	assert((!refreshToken.empty() || !code.empty()) &&
 		!clientID.empty() &&
@@ -555,21 +555,21 @@ std::string OAuth2Interface::AssembleAccessRequestQueryString(const std::string 
 		!grantType.empty()*/);
 
 	// Required fields
-	std::string queryString;
-	queryString.append("client_id=" + clientID);
-	queryString.append("&client_secret=" + clientSecret);
+	String queryString;
+	queryString.append(_T("client_id=") + clientID);
+	queryString.append(_T("&client_secret=") + clientSecret);
 
 	if (code.empty())
 	{
-		queryString.append("&refresh_token=" + refreshToken);
-		queryString.append("&grant_type=refresh_token");
+		queryString.append(_T("&refresh_token=") + refreshToken);
+		queryString.append(_T("&grant_type=refresh_token"));
 	}
 	else
 	{
-		queryString.append("&code=" + code);
-		queryString.append("&grant_type=" + grantType);
+		queryString.append(_T("&code=") + code);
+		queryString.append(_T("&grant_type=") + grantType);
 		if (!redirectURI.empty())
-			queryString.append("&redirect_uri=" + redirectURI);
+			queryString.append(_T("&redirect_uri=") + redirectURI);
 	}
 
 	return queryString;
@@ -595,7 +595,7 @@ std::string OAuth2Interface::AssembleAccessRequestQueryString(const std::string 
 bool OAuth2Interface::RedirectURIIsLocal() const
 {
 	assert(!redirectURI.empty());
-	const std::string localURL("http://localhost");
+	const String localURL(_T("http://localhost"));
 
 	return redirectURI.substr(0, localURL.length()).compare(localURL) == 0;
 }
@@ -621,10 +621,10 @@ int OAuth2Interface::StripPortFromLocalRedirectURI() const
 	assert(RedirectURIIsLocal());
 
 	size_t colon = redirectURI.find(':');
-	if (colon == std::string::npos)
+	if (colon == String::npos)
 		return 0;
 
-	std::stringstream s(redirectURI.substr(colon + 1));
+	IStringStream s(redirectURI.substr(colon + 1));
 
 	int port;
 	s >> port;
@@ -645,12 +645,12 @@ int OAuth2Interface::StripPortFromLocalRedirectURI() const
 //		None
 //
 // Return Value:
-//		std::string
+//		String
 //
 //==========================================================================
-std::string OAuth2Interface::GenerateSecurityStateKey() const
+String OAuth2Interface::GenerateSecurityStateKey() const
 {
-	std::string stateKey;
+	String stateKey;
 	while (stateKey.length() < 30)
 		stateKey.append(Base36Encode((int64_t)rand()
 			* (int64_t)rand() * (int64_t)rand() * (int64_t)rand()));
@@ -671,14 +671,14 @@ std::string OAuth2Interface::GenerateSecurityStateKey() const
 //		None
 //
 // Return Value:
-//		std::string
+//		String
 //
 //==========================================================================
-std::string OAuth2Interface::Base36Encode(const int64_t &value)
+String OAuth2Interface::Base36Encode(const int64_t &value)
 {
 	const unsigned int maxDigits(35);
 	const char* charset = "abcdefghijklmnopqrstuvwxyz0123456789";
-	std::string buf;
+	String buf;
 	buf.reserve(maxDigits);
 
 	int64_t v(value);

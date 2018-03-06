@@ -6,15 +6,15 @@
 #ifndef CURL_UTILITIES_H_
 #define CURL_UTILITIES_H_
 
+// utilities headers
+#include "utilities/uString.h"
+
 // libCURL headers
 #include <curl/curl.h>
 
-// Standard C++ headers
-#include <string>
-
 namespace CURLUtilities
 {
-	bool CURLCallHasError(const CURLcode& result, const std::string& message);
+	bool CURLCallHasError(const CURLcode& result, const String& message);
 }
 
 #endif// CURL_UTILITIES_H_

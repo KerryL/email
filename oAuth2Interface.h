@@ -11,8 +11,11 @@
 #include <string>
 #include <chrono>
 
-// utilities headers
+// email headers
 #include "jsonInterface.h"
+
+// utilities headers
+#include "utilities/uString.h"
 
 // cJSON (local) forward declarations
 struct cJSON;
@@ -24,58 +27,58 @@ public:
 	static OAuth2Interface& Get();
 	static void Destroy();
 
-	void SetAuthenticationURL(const std::string &authURLIn) { authURL = authURLIn; }
-	void SetTokenURL(const std::string &tokenURLIn) { tokenURL = tokenURLIn; }
-	void SetResponseType(const std::string &responseTypeIn) { responseType = responseTypeIn; }
-	void SetClientID(const std::string &clientIDIn) { clientID = clientIDIn; }
-	void SetClientSecret(const std::string &clientSecretIn) { clientSecret = clientSecretIn; }
-	void SetRedirectURI(const std::string &redirectURIIn) { redirectURI = redirectURIIn; }
-	void SetScope(const std::string &scopeIn) { scope = scopeIn; }
-	void SetLoginHint(const std::string &loginHintIn) { loginHint = loginHintIn; }
-	void SetGrantType(const std::string &grantTypeIn) { grantType = grantTypeIn; }
+	void SetAuthenticationURL(const String &authURLIn) { authURL = authURLIn; }
+	void SetTokenURL(const String &tokenURLIn) { tokenURL = tokenURLIn; }
+	void SetResponseType(const String &responseTypeIn) { responseType = responseTypeIn; }
+	void SetClientID(const String &clientIDIn) { clientID = clientIDIn; }
+	void SetClientSecret(const String &clientSecretIn) { clientSecret = clientSecretIn; }
+	void SetRedirectURI(const String &redirectURIIn) { redirectURI = redirectURIIn; }
+	void SetScope(const String &scopeIn) { scope = scopeIn; }
+	void SetLoginHint(const String &loginHintIn) { loginHint = loginHintIn; }
+	void SetGrantType(const String &grantTypeIn) { grantType = grantTypeIn; }
 	
-	void SetRefreshToken(const std::string &refreshTokenIn = "");
+	void SetRefreshToken(const String &refreshTokenIn = String());
 
-	std::string GetRefreshToken() const { return refreshToken; }
-	std::string GetAccessToken();
+	String GetRefreshToken() const { return refreshToken; }
+	String GetAccessToken();
 
-	static std::string Base36Encode(const int64_t &value);
+	static String Base36Encode(const int64_t &value);
 
 private:
 	OAuth2Interface();
 	~OAuth2Interface();
 
-	std::string authURL, tokenURL;
-	std::string responseType;
-	std::string clientID;
-	std::string clientSecret;
-	std::string redirectURI;
-	std::string scope;
-	std::string loginHint;
-	std::string grantType;
+	String authURL, tokenURL;
+	String responseType;
+	String clientID;
+	String clientSecret;
+	String redirectURI;
+	String scope;
+	String loginHint;
+	String grantType;
 
-	std::string refreshToken;
-	std::string accessToken;
+	String refreshToken;
+	String accessToken;
 
-	std::string RequestRefreshToken();
+	String RequestRefreshToken();
 
-	std::string AssembleRefreshRequestQueryString(const std::string &state = "") const;
-	std::string AssembleAccessRequestQueryString(const std::string &code = "") const;
+	String AssembleRefreshRequestQueryString(const String &state = String()) const;
+	String AssembleAccessRequestQueryString(const String &code = String()) const;
 
 	struct AuthorizationResponse
 	{
-		std::string deviceCode;
+		String deviceCode;
 		double expiresIn;
 		int interval;
 	};
 
-	bool HandleAuthorizationRequestResponse(const std::string &buffer,
+	bool HandleAuthorizationRequestResponse(const String &buffer,
 		AuthorizationResponse &response);
-	bool HandleRefreshRequestResponse(const std::string &buffer, const bool &silent = false);
-	bool HandleAccessRequestResponse(const std::string &buffer);
-	bool ResponseContainsError(const std::string &buffer);
+	bool HandleRefreshRequestResponse(const String &buffer, const bool &silent = false);
+	bool HandleAccessRequestResponse(const String &buffer);
+	bool ResponseContainsError(const String &buffer);
 
-	std::string GenerateSecurityStateKey() const;
+	String GenerateSecurityStateKey() const;
 	bool RedirectURIIsLocal() const;
 	bool IsLimitedInput() { return redirectURI.empty(); };
 	int StripPortFromLocalRedirectURI() const;

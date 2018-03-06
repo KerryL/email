@@ -9,8 +9,10 @@
 // Local headers
 #include "cJSON/cJSON.h"
 
+// utilities headers
+#include "utilities/uString.h"
+
 // Standard C++ headers
-#include <string>
 #include <vector>
 #include <ctime>
 
@@ -23,17 +25,17 @@ typedef void CURL;
 class JSONInterface
 {
 public:
-	JSONInterface(const std::string& userAgent = "");
+	JSONInterface(const String& userAgent = String());
 	virtual ~JSONInterface() = default;
 
-	void SetCACertificatePath(const std::string& path) { caCertificatePath = path; }
+	void SetCACertificatePath(const String& path) { caCertificatePath = path; }
 	void SetVerboseOutput(const bool& verboseOutput = true) { verbose = verboseOutput; }
 
 private:
-	const std::string userAgent;
+	const String userAgent;
 
 protected:
-	std::string caCertificatePath;
+	String caCertificatePath;
 	bool verbose = false;
 
 	struct ModificationData
@@ -43,32 +45,32 @@ protected:
 	typedef bool (*CURLModification)(CURL*, const ModificationData*);
 	static bool DoNothing(CURL*, const ModificationData*) { return true; }
 
-	bool DoCURLPost(const std::string &url, const std::string &data,
-		std::string &response, CURLModification curlModification = &JSONInterface::DoNothing,
+	bool DoCURLPost(const String &url, const String &data,
+		String &response, CURLModification curlModification = &JSONInterface::DoNothing,
 		const ModificationData* modificationData = nullptr) const;
-	bool DoCURLGet(const std::string &url, std::string &response,
+	bool DoCURLGet(const String &url, String &response,
 		CURLModification curlModification  = &JSONInterface::DoNothing,
 		const ModificationData* modificationData = nullptr) const;
 
-	static bool ReadJSON(cJSON* root, const std::string& field, int& value);
-	static bool ReadJSON(cJSON* root, const std::string& field, unsigned int& value);
-	static bool ReadJSON(cJSON* root, const std::string& field, std::string &value);
-	static bool ReadJSON(cJSON* root, const std::string& field, double& value);
-	static bool ReadJSON(cJSON* root, const std::string& field, std::tm& value);
-	static bool ReadJSON(cJSON* root, const std::string& field, bool& value);
+	static bool ReadJSON(cJSON* root, const String& field, int& value);
+	static bool ReadJSON(cJSON* root, const String& field, unsigned int& value);
+	static bool ReadJSON(cJSON* root, const String& field, String &value);
+	static bool ReadJSON(cJSON* root, const String& field, double& value);
+	static bool ReadJSON(cJSON* root, const String& field, std::tm& value);
+	static bool ReadJSON(cJSON* root, const String& field, bool& value);
 
 	template <typename T>
-	static bool ReadJSON(cJSON *root, const std::string& field, std::vector<T>& v);
+	static bool ReadJSON(cJSON *root, const String& field, std::vector<T>& v);
 
-	static bool ReadJSONArrayToVector(cJSON *root, const std::string& field, std::vector<std::string>& v);
+	static bool ReadJSONArrayToVector(cJSON *root, const String& field, std::vector<String>& v);
 
 	static size_t CURLWriteCallback(char *ptr, size_t size, size_t nmemb, void *userData);
 
-	static std::string URLEncode(const std::string& s);
+	static String URLEncode(const String& s);
 };
 
 template <typename T>
-bool JSONInterface::ReadJSON(cJSON *root, const std::string& field, std::vector<T>& v)
+bool JSONInterface::ReadJSON(cJSON *root, const String& field, std::vector<T>& v)
 {
 	v.resize(cJSON_GetArraySize(root));
 	unsigned int i(0);
