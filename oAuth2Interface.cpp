@@ -282,7 +282,7 @@ String OAuth2Interface::RequestRefreshToken()
 //==========================================================================
 bool OAuth2Interface::ResponseContainsError(const String &buffer)
 {
-	cJSON *root(cJSON_Parse(UString::ToNarrowString<String>(buffer).c_str()));
+	cJSON *root(cJSON_Parse(UString::ToNarrowString(buffer).c_str()));
 	if (!root)
 	{
 		Cerr << "Failed to parse returned string (ResponseContainsError())\n";
@@ -333,7 +333,7 @@ bool OAuth2Interface::HandleAuthorizationRequestResponse(
 {
 	assert(IsLimitedInput());
 
-	cJSON *root(cJSON_Parse(UString::ToNarrowString<String>(buffer).c_str()));
+	cJSON *root(cJSON_Parse(UString::ToNarrowString(buffer).c_str()));
 	if (!root)
 	{
 		Cerr << "Failed to parse returned string (HandleAuthorizationRequestResponse())\n";
@@ -378,7 +378,7 @@ bool OAuth2Interface::HandleAuthorizationRequestResponse(
 //==========================================================================
 bool OAuth2Interface::HandleRefreshRequestResponse(const String &buffer, const bool &silent)
 {
-	cJSON *root = cJSON_Parse(UString::ToNarrowString<String>(buffer).c_str());
+	cJSON *root = cJSON_Parse(UString::ToNarrowString(buffer).c_str());
 	if (!root)
 	{
 		if (!silent)
@@ -417,7 +417,7 @@ bool OAuth2Interface::HandleRefreshRequestResponse(const String &buffer, const b
 //==========================================================================
 bool OAuth2Interface::HandleAccessRequestResponse(const String &buffer)
 {
-	cJSON *root = cJSON_Parse(UString::ToNarrowString<String>(buffer).c_str());
+	cJSON *root = cJSON_Parse(UString::ToNarrowString(buffer).c_str());
 	if (!root)
 	{
 		Cerr << "Failed to parse returned string (HandleAccessRequestResponse())\n";

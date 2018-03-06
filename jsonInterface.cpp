@@ -82,13 +82,13 @@ bool JSONInterface::DoCURLPost(const String &url, const String &data,
 	curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
 
 	if (!caCertificatePath.empty())
-		curl_easy_setopt(curl, CURLOPT_CAPATH, UString::ToNarrowString<String>(caCertificatePath).c_str());
+		curl_easy_setopt(curl, CURLOPT_CAPATH, UString::ToNarrowString(caCertificatePath).c_str());
 
 	if (verbose)
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
 	if (!userAgent.empty())
-		curl_easy_setopt(curl, CURLOPT_USERAGENT, UString::ToNarrowString<String>(userAgent).c_str());
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, UString::ToNarrowString(userAgent).c_str());
 
 	curl_easy_setopt(curl, CURLOPT_POST, true);
 /*	char *urlEncodedData = curl_easy_escape(curl, data.c_str(), data.length());
@@ -101,14 +101,14 @@ bool JSONInterface::DoCURLPost(const String &url, const String &data,
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, urlEncodedData);
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(urlEncodedData));*/
 
-	const std::string postData(UString::ToNarrowString<String>(data));
+	const std::string postData(UString::ToNarrowString(data));
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData.c_str());
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, postData.length());
 
 	if (!curlModification(curl, modificationData))
 		return false;
 
-	curl_easy_setopt(curl, CURLOPT_URL, UString::ToNarrowString<String>(url).c_str());
+	curl_easy_setopt(curl, CURLOPT_URL, UString::ToNarrowString(url).c_str());
 	CURLcode result = curl_easy_perform(curl);
 
 //	curl_free(urlEncodedData);
@@ -156,10 +156,10 @@ bool JSONInterface::DoCURLGet(const String &url, String &response,
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
 
 	if (!caCertificatePath.empty())
-		curl_easy_setopt(curl, CURLOPT_CAPATH, UString::ToNarrowString<String>(caCertificatePath).c_str());
+		curl_easy_setopt(curl, CURLOPT_CAPATH, UString::ToNarrowString(caCertificatePath).c_str());
 
 	if (!userAgent.empty())
-		curl_easy_setopt(curl, CURLOPT_USERAGENT, UString::ToNarrowString<String>(userAgent).c_str());
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, UString::ToNarrowString(userAgent).c_str());
 
 	if (verbose)
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
@@ -167,7 +167,7 @@ bool JSONInterface::DoCURLGet(const String &url, String &response,
 	if (!curlModification(curl, modificationData))
 		return false;
 
-	curl_easy_setopt(curl, CURLOPT_URL, UString::ToNarrowString<String>(url).c_str());
+	curl_easy_setopt(curl, CURLOPT_URL, UString::ToNarrowString(url).c_str());
 	CURLcode result = curl_easy_perform(curl);
 
 	if(result != CURLE_OK)
@@ -228,7 +228,7 @@ size_t JSONInterface::CURLWriteCallback(char *ptr, size_t size, size_t nmemb, vo
 //==========================================================================
 bool JSONInterface::ReadJSON(cJSON *root, const String& field, int &value)
 {
-	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString<String>(field).c_str());
+	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString(field).c_str());
 	if (!element)
 	{
 		//Cerr << "Failed to read field '" << field << "' from JSON array\n";
@@ -259,7 +259,7 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, int &value)
 //==========================================================================
 bool JSONInterface::ReadJSON(cJSON *root, const String& field, unsigned int &value)
 {
-	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString<String>(field).c_str());
+	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString(field).c_str());
 	if (!element)
 	{
 		//Cerr << "Failed to read field '" << field << "' from JSON array\n";
@@ -290,7 +290,7 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, unsigned int &val
 //==========================================================================
 bool JSONInterface::ReadJSON(cJSON *root, const String& field, String &value)
 {
-	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString<String>(field).c_str());
+	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString(field).c_str());
 	if (!element)
 	{
 		//Cerr << "Failed to read field '" << field << "' from JSON array\n";
@@ -322,7 +322,7 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, String &value)
 //==========================================================================
 bool JSONInterface::ReadJSON(cJSON *root, const String& field, double &value)
 {
-	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString<String>(field).c_str());
+	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString(field).c_str());
 	if (!element)
 	{
 		//Cerr << "Failed to read field '" << field << "' from JSON array\n";
@@ -353,7 +353,7 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, double &value)
 //==========================================================================
 bool JSONInterface::ReadJSON(cJSON *root, const String& field, std::tm &value)
 {
-	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString<String>(field).c_str());
+	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString(field).c_str());
 	if (!element)
 	{
 		//Cerr << "Failed to read field '" << field << "' from JSON array\n";
@@ -395,7 +395,7 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, std::tm &value)
 //==========================================================================
 bool JSONInterface::ReadJSON(cJSON *root, const String& field, bool &value)
 {
-	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString<String>(field).c_str());
+	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString(field).c_str());
 	if (!element)
 	{
 		//Cerr << "Failed to read field '" << field << "' from JSON array\n";
@@ -471,7 +471,7 @@ String JSONInterface::URLEncode(const String& s)
 //==========================================================================
 bool JSONInterface::ReadJSONArrayToVector(cJSON *root, const String& field, std::vector<String>& v)
 {
-	cJSON* arrayParent(cJSON_GetObjectItem(root, UString::ToNarrowString<String>(field).c_str()));
+	cJSON* arrayParent(cJSON_GetObjectItem(root, UString::ToNarrowString(field).c_str()));
 	if (!arrayParent)
 		return false;
 
