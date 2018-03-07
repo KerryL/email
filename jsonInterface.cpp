@@ -54,19 +54,19 @@ JSONInterface::JSONInterface(const String& userAgent) : userAgent(userAgent)
 //
 // Input Arguments:
 //		url					= const String&
-//		data				= const String&
+//		data				= const std::string&
 //		curlModification	= CURLModification
 //		modificationData	= const ModificationData*
 //
 // Output Arguments:
-//		response	= String&
+//		response	= std::string&
 //
 // Return Value:
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-bool JSONInterface::DoCURLPost(const String &url, const String &data,
-	String &response, CURLModification curlModification,
+bool JSONInterface::DoCURLPost(const String &url, const std::string &data,
+	std::string &response, CURLModification curlModification,
 	const ModificationData* modificationData) const
 {
 	CURL *curl = curl_easy_init();
@@ -101,9 +101,8 @@ bool JSONInterface::DoCURLPost(const String &url, const String &data,
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, urlEncodedData);
 	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, strlen(urlEncodedData));*/
 
-	const std::string postData(UString::ToNarrowString(data));
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, postData.c_str());
-	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, postData.length());
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, data.length());
 
 	if (!curlModification(curl, modificationData))
 		return false;
@@ -130,7 +129,7 @@ bool JSONInterface::DoCURLPost(const String &url, const String &data,
 // Description:		Creates a cURL object, GETs, obtains response, and cleans up.
 //
 // Input Arguments:
-//		url					= const String&
+//		url					= const std::string&
 //		curlModification	= CURLModification
 //		modificationData	= const ModificationData*
 //
@@ -141,7 +140,7 @@ bool JSONInterface::DoCURLPost(const String &url, const String &data,
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-bool JSONInterface::DoCURLGet(const String &url, String &response,
+bool JSONInterface::DoCURLGet(const String &url, std::string &response,
 	CURLModification curlModification, const ModificationData* modificationData) const
 {
 	CURL *curl = curl_easy_init();
@@ -203,8 +202,8 @@ bool JSONInterface::DoCURLGet(const String &url, String &response,
 size_t JSONInterface::CURLWriteCallback(char *ptr, size_t size, size_t nmemb, void *userData)
 {
 	size_t totalSize = size * nmemb;
-//	((String*)userData)->clear();
-	((String*)userData)->append(UString::ToStringType(std::string(ptr, totalSize)));
+//	((std::string*)userData)->clear();
+	((std::string*)userData)->append(ptr, totalSize);
 
 	return totalSize;
 }

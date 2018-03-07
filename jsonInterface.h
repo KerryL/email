@@ -45,10 +45,10 @@ protected:
 	typedef bool (*CURLModification)(CURL*, const ModificationData*);
 	static bool DoNothing(CURL*, const ModificationData*) { return true; }
 
-	bool DoCURLPost(const String &url, const String &data,
-		String &response, CURLModification curlModification = &JSONInterface::DoNothing,
+	bool DoCURLPost(const String &url, const std::string &data,
+		std::string &response, CURLModification curlModification = &JSONInterface::DoNothing,
 		const ModificationData* modificationData = nullptr) const;
-	bool DoCURLGet(const String &url, String &response,
+	bool DoCURLGet(const String &url, std::string &response,
 		CURLModification curlModification  = &JSONInterface::DoNothing,
 		const ModificationData* modificationData = nullptr) const;
 

@@ -181,9 +181,11 @@ String OAuth2Interface::RequestRefreshToken()
 
 	if (IsLimitedInput())
 	{
-		String readBuffer;
-		if (!DoCURLPost(authURL, AssembleRefreshRequestQueryString(), readBuffer))
+		std::string rawReadBuffer;
+		if (!DoCURLPost(authURL, UString::ToNarrowString(AssembleRefreshRequestQueryString()), rawReadBuffer))
 			return String();
+
+		const String readBuffer(UString::ToStringType(rawReadBuffer));
 
 		if (ResponseContainsError(readBuffer))
 			return String();
@@ -210,7 +212,7 @@ String OAuth2Interface::RequestRefreshToken()
 				return String();
 			}
 
-			if (!DoCURLPost(tokenURL, queryString, readBuffer))
+			if (!DoCURLPost(tokenURL, UString::ToNarrowString(queryString), rawReadBuffer))
 				return String();
 
 			if (ResponseContainsError(readBuffer))
@@ -222,7 +224,6 @@ String OAuth2Interface::RequestRefreshToken()
 		assert(!responseType.empty());
 
 		String stateKey;// = GenerateSecurityStateKey();// Not sure why it doesn't work with the state key...
-		String readBuffer;
 		
 		// TODO:  Alternatively, we can pop up a browser, wait for the user
 		// to verify permissions, then grab the result ourselves, without
@@ -250,9 +251,10 @@ String OAuth2Interface::RequestRefreshToken()
 			Cin >> authorizationCode;
 		}
 
-		if (!DoCURLPost(tokenURL, AssembleAccessRequestQueryString(authorizationCode), readBuffer) ||
-			ResponseContainsError(readBuffer) ||
-			!HandleRefreshRequestResponse(readBuffer))
+		std::string readBuffer;
+		if (!DoCURLPost(tokenURL, UString::ToNarrowString(AssembleAccessRequestQueryString(authorizationCode)), readBuffer) ||
+			ResponseContainsError(UString::ToStringType(readBuffer)) ||
+			!HandleRefreshRequestResponse(UString::ToStringType(readBuffer)))
 		{
 			Cerr << "Failed to obtain refresh token\n";
 			return String();
@@ -474,10 +476,10 @@ String OAuth2Interface::GetAccessToken()
 
 	Cout << "Access token is invalid - requesting a new one" << std::endl;
 
-	String readBuffer;
-	if (!DoCURLPost(tokenURL, AssembleAccessRequestQueryString(), readBuffer) ||
-		ResponseContainsError(readBuffer) ||
-		!HandleAccessRequestResponse(readBuffer))
+	std::string readBuffer;
+	if (!DoCURLPost(tokenURL, UString::ToNarrowString(AssembleAccessRequestQueryString()), readBuffer) ||
+		ResponseContainsError(UString::ToStringType(readBuffer)) ||
+		!HandleAccessRequestResponse(UString::ToStringType(readBuffer)))
 	{
 		Cerr << "Failed to obtain access token" << std::endl;
 		return String();
