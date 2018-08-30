@@ -33,7 +33,7 @@
 // Description:		Constructor for JSONInterface class.
 //
 // Input Arguments:
-//		userAgent	= const String&
+//		userAgent	= const UString::String&
 //
 // Output Arguments:
 //		None
@@ -42,7 +42,7 @@
 //		None
 //
 //==========================================================================
-JSONInterface::JSONInterface(const String& userAgent) : userAgent(userAgent)
+JSONInterface::JSONInterface(const UString::String& userAgent) : userAgent(userAgent)
 {
 }
 
@@ -53,7 +53,7 @@ JSONInterface::JSONInterface(const String& userAgent) : userAgent(userAgent)
 // Description:		Creates a cURL object, POSTs, obtains response, and cleans up.
 //
 // Input Arguments:
-//		url					= const String&
+//		url					= const UString::String&
 //		data				= const std::string&
 //		curlModification	= CURLModification
 //		modificationData	= const ModificationData*
@@ -65,7 +65,7 @@ JSONInterface::JSONInterface(const String& userAgent) : userAgent(userAgent)
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-bool JSONInterface::DoCURLPost(const String &url, const std::string &data,
+bool JSONInterface::DoCURLPost(const UString::String &url, const std::string &data,
 	std::string &response, CURLModification curlModification,
 	const ModificationData* modificationData) const
 {
@@ -134,13 +134,13 @@ bool JSONInterface::DoCURLPost(const String &url, const std::string &data,
 //		modificationData	= const ModificationData*
 //
 // Output Arguments:
-//		response	= String&
+//		response	= UString::String&
 //
 // Return Value:
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-bool JSONInterface::DoCURLGet(const String &url, std::string &response,
+bool JSONInterface::DoCURLGet(const UString::String &url, std::string &response,
 	CURLModification curlModification, const ModificationData* modificationData) const
 {
 	CURL *curl = curl_easy_init();
@@ -190,7 +190,7 @@ bool JSONInterface::DoCURLGet(const String &url, std::string &response,
 //		ptr			= char*
 //		size		= size_t indicating number of elements of size nmemb
 //		nmemb		= size_t indicating size of each element
-//		userData	= void* (must be pointer to String)
+//		userData	= void* (must be pointer to UString::)
 //
 // Output Arguments:
 //		None
@@ -216,7 +216,7 @@ size_t JSONInterface::CURLWriteCallback(char *ptr, size_t size, size_t nmemb, vo
 //
 // Input Arguments:
 //		root	= cJSON*
-//		field	= const String&
+//		field	= const UString::String&
 //
 // Output Arguments:
 //		value	= int&
@@ -225,7 +225,7 @@ size_t JSONInterface::CURLWriteCallback(char *ptr, size_t size, size_t nmemb, vo
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-bool JSONInterface::ReadJSON(cJSON *root, const String& field, int &value)
+bool JSONInterface::ReadJSON(cJSON *root, const UString::String& field, int &value)
 {
 	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString(field).c_str());
 	if (!element)
@@ -247,7 +247,7 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, int &value)
 //
 // Input Arguments:
 //		root	= cJSON*
-//		field	= const String&
+//		field	= const UString::String&
 //
 // Output Arguments:
 //		value	= unsigned int&
@@ -256,7 +256,7 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, int &value)
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-bool JSONInterface::ReadJSON(cJSON *root, const String& field, unsigned int &value)
+bool JSONInterface::ReadJSON(cJSON *root, const UString::String& field, unsigned int &value)
 {
 	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString(field).c_str());
 	if (!element)
@@ -278,16 +278,16 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, unsigned int &val
 //
 // Input Arguments:
 //		root	= cJSON*
-//		field	= const String&
+//		field	= const UString::String&
 //
 // Output Arguments:
-//		value	= String&
+//		value	= UString::String&
 //
 // Return Value:
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-bool JSONInterface::ReadJSON(cJSON *root, const String& field, String &value)
+bool JSONInterface::ReadJSON(cJSON *root, const UString::String& field, UString::String &value)
 {
 	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString(field).c_str());
 	if (!element)
@@ -310,7 +310,7 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, String &value)
 //
 // Input Arguments:
 //		root	= cJSON*
-//		field	= const String&
+//		field	= const UString::String&
 //
 // Output Arguments:
 //		value	= double&
@@ -319,7 +319,7 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, String &value)
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-bool JSONInterface::ReadJSON(cJSON *root, const String& field, double &value)
+bool JSONInterface::ReadJSON(cJSON *root, const UString::String& field, double &value)
 {
 	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString(field).c_str());
 	if (!element)
@@ -341,7 +341,7 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, double &value)
 //
 // Input Arguments:
 //		root	= cJSON*
-//		field	= const String&
+//		field	= const UString::String&
 //
 // Output Arguments:
 //		value	= std::chrono::steady_clock::time_point&
@@ -350,7 +350,7 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, double &value)
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-bool JSONInterface::ReadJSON(cJSON *root, const String& field, std::tm &value)
+bool JSONInterface::ReadJSON(cJSON *root, const UString::String& field, std::tm &value)
 {
 	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString(field).c_str());
 	if (!element)
@@ -359,11 +359,11 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, std::tm &value)
 		return false;
 	}
 
-	IStringStream ss(UString::ToStringType(element->valuestring));
+	UString::IStringStream ss(UString::ToStringType(element->valuestring));
 	// Possible bug in MSVC's implemention of std::get_time (in 2015 and 2017)
-	// Doesn't like format strings longer than actual string
-	const String format(_T("%Y-%m-%d %H:%M"));
-	const size_t formatLength(11);// Minimum possible length of input string to successfully fill out this format
+	// Doesn't like format UString::s longer than actual UString::
+	const UString::String format(_T("%Y-%m-%d %H:%M"));
+	const size_t formatLength(11);// Minimum possible length of input UString::String to successfully fill out this format
 	if (ss.str().length() < formatLength)
 		return false;
 	if ((ss >> std::get_time(&value, format.c_str())).fail())
@@ -383,7 +383,7 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, std::tm &value)
 //
 // Input Arguments:
 //		root	= cJSON*
-//		field	= const String&
+//		field	= const UString::String&
 //
 // Output Arguments:
 //		value	= bool&
@@ -392,7 +392,7 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, std::tm &value)
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-bool JSONInterface::ReadJSON(cJSON *root, const String& field, bool &value)
+bool JSONInterface::ReadJSON(cJSON *root, const UString::String& field, bool &value)
 {
 	cJSON *element = cJSON_GetObjectItem(root, UString::ToNarrowString(field).c_str());
 	if (!element)
@@ -415,7 +415,7 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, bool &value)
 //
 // Input Arguments:
 //		root	= cJSON*
-//		field	= const String&
+//		field	= const UString::String&
 //
 // Output Arguments:
 //		value	= double&
@@ -424,27 +424,27 @@ bool JSONInterface::ReadJSON(cJSON *root, const String& field, bool &value)
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-String JSONInterface::URLEncode(const String& s)
+UString::String JSONInterface::URLEncode(const UString::String& s)
 {
-	String encoded;
+	UString::String encoded;
 	for (const auto& c : s)
 	{
-		if (c == Char(' '))
+		if (c == UString::Char(' '))
 			encoded.append(_T("%20"));
-		else if (c == Char('"'))
+		else if (c == UString::Char('"'))
 			encoded.append(_T("%22"));
-		else if (c == Char('<'))
+		else if (c == UString::Char('<'))
 			encoded.append(_T("%3C"));
-		else if (c == Char('>'))
+		else if (c == UString::Char('>'))
 			encoded.append(_T("%3E"));
-		else if (c == Char('#'))
+		else if (c == UString::Char('#'))
 			encoded.append(_T("%23"));
-		else if (c == Char('%'))
+		else if (c == UString::Char('%'))
 			encoded.append(_T("%25"));
-		else if (c == Char('|'))
+		else if (c == UString::Char('|'))
 			encoded.append(_T("%7C"));
 		else
-			encoded.append(String(&c, 1));
+			encoded.append(UString::String(&c, 1));
 	}
 
 	return encoded;
@@ -459,16 +459,16 @@ String JSONInterface::URLEncode(const String& s)
 //
 // Input Arguments:
 //		root	= cJSON*
-//		field	= const String&
+//		field	= const UString::String&
 //
 // Output Arguments:
-//		v		= std::vector<String>&
+//		v		= std::vector<UString::String>&
 //
 // Return Value:
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-bool JSONInterface::ReadJSONArrayToVector(cJSON *root, const String& field, std::vector<String>& v)
+bool JSONInterface::ReadJSONArrayToVector(cJSON *root, const UString::String& field, std::vector<UString::String>& v)
 {
 	cJSON* arrayParent(cJSON_GetObjectItem(root, UString::ToNarrowString(field).c_str()));
 	if (!arrayParent)

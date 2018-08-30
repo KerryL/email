@@ -17,7 +17,7 @@
 //
 // Input Arguments:
 //		result	= const CURLcode&
-//		message	= const String&
+//		message	= const UString::String&
 //
 // Output Arguments:
 //		None
@@ -26,7 +26,7 @@
 //		bool, true for success, false otherwise
 //
 //==========================================================================
-bool CURLUtilities::CURLCallHasError(const CURLcode& result, const String& message)
+bool CURLUtilities::CURLCallHasError(const CURLcode& result, const UString::String& message)
 {
 	if (result == CURLE_OK)
 		return false;

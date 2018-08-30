@@ -14,7 +14,7 @@
 
 namespace CURLUtilities
 {
-	bool CURLCallHasError(const CURLcode& result, const String& message);
+	bool CURLCallHasError(const CURLcode& result, const UString::String& message);
 }
 
 #endif// CURL_UTILITIES_H_
