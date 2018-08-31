@@ -274,7 +274,7 @@ UString::String OAuth2Interface::RequestRefreshToken()
 
 			authorizationCode = ExtractAuthCodeFromGETRequest(message);
 			const auto successResponse(BuildHTTPSuccessResponse());
-			assert(successResponse.length() < std::numeric_limits<int>::max());
+			assert(successResponse.length() < std::numeric_limits<unsigned int>::max());
 			if (!webSocket.TCPSend(successResponse.c_str(), static_cast<int>(successResponse.length())))
 				Cout << "Warning:  Authorization code response failed to send" << std::endl;
 		}
