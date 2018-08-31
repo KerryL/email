@@ -14,13 +14,19 @@
 // Standard C headers
 #include <string.h>
 
-// *nix headers
-#ifndef _WIN32
-#include <unistd.h>
-#endif
-
 // cURL headers
 #include <curl/curl.h>
+
+// utilities headers
+#include "utilities/cppSocket.h"
+
+// OS headers
+#ifdef _WIN32
+#include <Windows.h>
+#include <shellapi.h>
+#else
+#include <unistd.h>
+#endif
 
 // Local headers
 #include "oAuth2Interface.h"
@@ -224,29 +230,55 @@ UString::String OAuth2Interface::RequestRefreshToken()
 		assert(!responseType.empty());
 
 		UString::String stateKey;// = GenerateSecurityStateKey();// Not sure why it doesn't work with the state key...
-		
-		// TODO:  Alternatively, we can pop up a browser, wait for the user
-		// to verify permissions, then grab the result ourselves, without
-		// requiring the user to copy/paste into browser, then again to this
-		// application.
-		// The benefit of doing it the way we're doing it now, though, is
-		// that the browser used to authenticate does not need to be on the
-		// same machine that is running this application.
-		Cout << "Enter this address in your browser:" << std::endl
-			<< authURL << "?" << AssembleRefreshRequestQueryString(stateKey) << std::endl;
+
+		const UString::String assembledAuthURL(authURL + UString::Char('?') + AssembleRefreshRequestQueryString(stateKey));
+		CPPSocket webSocket(CPPSocket::SocketType::SocketTCPServer);
+		if (RedirectURIIsLocal())
+		{
+			if (!webSocket.Create(StripPortFromLocalRedirectURI(), UString::ToNarrowString(StripAddressFromLocalRedirectURI()).c_str()))
+				return UString::String();
+#ifdef _WIN32
+			ShellExecute(nullptr, _T("open"), assembledAuthURL.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+#else
+			system(UString::ToNarrowString(UString::String(_T("xdg-open '")) + assembledAuthURL + UString::String(_T("'"))).c_str());
+#endif
+		}
+		else// (for example, with redirect URI set to "oob")
+		{
+			// The benefit of doing it the way we're doing it now, though, is
+			// that the browser used to authenticate does not need to be on the
+			// same machine that is running this application.
+			Cout << "Enter this address in your browser:" << std::endl << assembledAuthURL << std::endl;
+		}
 
 		UString::String authorizationCode;
 		if (RedirectURIIsLocal())
 		{
-			// TODO:  What now?  Need to receive authorization code by listening to appropriate port?
-			// Can cURL do this?
-			//curl_easy_setopt(curl, CURLOPT_PORT, StripPortFromLocalRedirectURI());
-			assert(false);
+			if (!webSocket.WaitForClientData(60000))
+			{
+				Cerr << "No response... aborting\n";
+				return UString::String();
+			}
+
+			std::string message;
+			{
+				std::lock_guard<std::mutex> lock(webSocket.GetMutex());
+				const auto messageSize(webSocket.Receive());
+				if (messageSize <= 0)
+					return UString::String();
+				message.assign(webSocket.GetLastMessage(), messageSize);
+			}
+
+			if (message.empty())
+				return UString::String();
+
+			authorizationCode = ExtractAuthCodeFromGETRequest(message);
+			const auto successResponse(BuildHTTPSuccessResponse());
+			if (!webSocket.TCPSend(successResponse.c_str(), successResponse.length()))
+				Cout << "Warning:  Authorization code response failed to send" << std::endl;
 		}
 		else
 		{
-			// TODO:  Grab verification code automatically (see note above
-			// prior to "Enter this address...")
 			Cout << "Enter verification code:" << std::endl;
 			Cin >> authorizationCode;
 		}
@@ -263,6 +295,38 @@ UString::String OAuth2Interface::RequestRefreshToken()
 
 	Cout << "Successfully obtained refresh token" << std::endl;
 	return refreshToken;
+}
+
+UString::String OAuth2Interface::ExtractAuthCodeFromGETRequest(const std::string& rawRequest)
+{
+	UString::String request(UString::ToStringType(rawRequest));
+	const UString::String startKey(_T("?code="));
+	const auto start(request.find(startKey));
+	if (start == UString::String::npos)
+		return UString::String();
+
+	const UString::String endKey(_T(" HTTP/1.1"));
+	const auto end(request.find(endKey, start));
+	if (end == UString::String::npos)
+		return UString::String();
+	return request.substr(start + startKey.length(), end - start - startKey.length());
+}
+
+std::string OAuth2Interface::BuildHTTPSuccessResponse()
+{
+	std::string body("<html><body><h1>Success!</h1><p>eBirdDataProcess was successfully authorized to access Google Fusion Tables.</p></body></html>");
+
+	std::ostringstream headerStream;
+	headerStream << "HTTP/1.1 200 OK\n"
+		<< "Date: Sun, 18 Oct 2009 08:56:53 GMT\n"
+		<< "Server: eBirdDataProcessor\n"
+		<< "Last-Modified: Sat, 20 Nov 2004 07:16:26 GMT\n"
+		<< "Accept-Ranges: bytes\n"
+		<< "Content-Length: " << body.length() << '\n'
+		<< "Connection: close\n"
+		<< "Content-Type: text/html\n\n";
+
+	return headerStream.str() + body;
 }
 
 //==========================================================================
@@ -597,9 +661,11 @@ UString::String OAuth2Interface::AssembleAccessRequestQueryString(const UString:
 bool OAuth2Interface::RedirectURIIsLocal() const
 {
 	assert(!redirectURI.empty());
-	const UString::String localURL(_T("http://localhost"));
+	const UString::String localURL1(_T("http://localhost"));
+	const UString::String localURL2(_T("http://127.0.0.1"));
 
-	return redirectURI.substr(0, localURL.length()).compare(localURL) == 0;
+	return redirectURI.substr(0, localURL1.length()).compare(localURL1) == 0 ||
+		redirectURI.substr(0, localURL2.length()).compare(localURL2) == 0;
 }
 
 //==========================================================================
@@ -615,22 +681,33 @@ bool OAuth2Interface::RedirectURIIsLocal() const
 //		None
 //
 // Return Value:
-//		int, contains port number or zero for error
+//		unsigned short, contains port number or zero for error
 //
 //==========================================================================
-int OAuth2Interface::StripPortFromLocalRedirectURI() const
+unsigned short OAuth2Interface::StripPortFromLocalRedirectURI() const
 {
 	assert(RedirectURIIsLocal());
 
-	size_t colon = redirectURI.find(':');
+	const size_t colon(redirectURI.find_last_of(':'));
 	if (colon == UString::String::npos)
 		return 0;
 
 	UString::IStringStream s(redirectURI.substr(colon + 1));
 
-	int port;
+	unsigned short port;
 	s >> port;
 	return port;
+}
+
+
+UString::String OAuth2Interface::StripAddressFromLocalRedirectURI() const
+{
+	assert(RedirectURIIsLocal());
+
+	const size_t colon(redirectURI.find_last_of(':'));
+	if (colon == UString::String::npos)
+		return redirectURI;
+	return redirectURI.substr(0, colon);
 }
 
 //==========================================================================

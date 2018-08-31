@@ -23,7 +23,6 @@ struct cJSON;
 class OAuth2Interface : public JSONInterface
 {
 public:
-
 	static OAuth2Interface& Get();
 	static void Destroy();
 
@@ -36,7 +35,7 @@ public:
 	void SetScope(const UString::String &scopeIn) { scope = scopeIn; }
 	void SetLoginHint(const UString::String &loginHintIn) { loginHint = loginHintIn; }
 	void SetGrantType(const UString::String &grantTypeIn) { grantType = grantTypeIn; }
-	
+
 	void SetRefreshToken(const UString::String &refreshTokenIn = UString::String());
 
 	UString::String GetRefreshToken() const { return refreshToken; }
@@ -81,11 +80,15 @@ private:
 	UString::String GenerateSecurityStateKey() const;
 	bool RedirectURIIsLocal() const;
 	bool IsLimitedInput() { return redirectURI.empty(); };
-	int StripPortFromLocalRedirectURI() const;
+	unsigned short StripPortFromLocalRedirectURI() const;
+	UString::String StripAddressFromLocalRedirectURI() const;
 
 	std::chrono::system_clock::time_point accessTokenValidUntilTime;
 
 	static OAuth2Interface *singleton;
+	static UString::String ExtractAuthCodeFromGETRequest(const std::string& rawRequest);
+
+	static std::string BuildHTTPSuccessResponse();
 };
 
 #endif// OAUTH2_INTERFACE_H_
