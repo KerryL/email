@@ -12,7 +12,9 @@
 
 // OS headers
 #ifdef _WIN32
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif// NOMINMAX
 #include <Windows.h>
 #else
 #include <sys/time.h>
@@ -57,7 +59,7 @@
 EmailSender::EmailSender(const std::string &subject, const std::string &message,
 	const std::string &imageFileName, const std::vector<std::string> &recipients,
 	const LoginInfo &loginInfo, const bool &useHTML, const bool& testMode,
-	std::ostream &outStream) : subject(subject), message(message), imageFileName(imageFileName),
+	UString::OStream &outStream) : subject(subject), message(message), imageFileName(imageFileName),
 	recipients(recipients), loginInfo(loginInfo), useHTML(useHTML), testMode(testMode),
 	outStream(outStream)
 {
@@ -67,14 +69,14 @@ EmailSender::EmailSender(const std::string &subject, const std::string &message,
 	if (testMode)
 	{
 		outStream << "Using cURL version:" << std::endl << curl_version() << std::endl;
-		outStream << "Image file name: '" << imageFileName << "'." << std::endl;
+		outStream << "Image file name: '" << UString::ToStringType(imageFileName) << "'." << std::endl;
 	}
 
 	payloadLines = 0;
-	payloadText = NULL;
+	payloadText = nullptr;
 
 	messageLines = 0;
-	messageText = NULL;
+	messageText = nullptr;
 }
 
 //==========================================================================
@@ -128,7 +130,7 @@ bool EmailSender::Send()
 	uploadCtx.linesRead = 0;
 	uploadCtx.et = this;
 
-	struct curl_slist *recipientList = NULL;
+	struct curl_slist *recipientList = nullptr;
 
 	curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 	curl_easy_setopt(curl, CURLOPT_URL, loginInfo.smtpUrl.c_str());
@@ -150,13 +152,13 @@ bool EmailSender::Send()
 
 	if (testMode)
 	{
-		outStream << "Sending messages from " << loginInfo.localEmail << " to ";
+		outStream << "Sending messages from " << UString::ToStringType(loginInfo.localEmail) << " to ";
 		unsigned int i;
 		for (i = 0; i < recipients.size(); i++)
 		{
 			if (i > 0)
 				outStream << ", ";
-			outStream << recipients[i];
+			outStream << UString::ToStringType(recipients[i]);
 		}
 		outStream << std::endl;
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
@@ -167,8 +169,7 @@ bool EmailSender::Send()
 
 	unsigned int i;
 	for (i = 0; i < recipients.size(); i++)
-		recipientList = curl_slist_append(recipientList, ("<"
-		+ recipients[i] + ">").c_str());
+		recipientList = curl_slist_append(recipientList, ("<" + recipients[i] + ">").c_str());
     curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipientList);
 
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, &EmailSender::PayloadSource);
@@ -321,7 +322,7 @@ void EmailSender::GeneratePayloadText()
 void EmailSender::GenerateMessageText()
 {
 	DeleteMessageText();
-	std::stringstream mStream(message);
+	std::istringstream mStream(message);
 	std::vector<std::string> mVector;
 	std::string line;
 
@@ -363,7 +364,7 @@ void EmailSender::DeleteMessageText()
 		for (i = 0; i < messageLines - 1; i++)
 			delete [] messageText[i];
 		delete [] messageText;
-		messageText = NULL;
+		messageText = nullptr;
 	}
 }
 
@@ -469,18 +470,18 @@ std::string EmailSender::GetDateString()
 //==========================================================================
 std::string EmailSender::GenerateMessageID() const
 {
-	std::string id("<");
+	UString::String id(_T("<"));
 	id.append(OAuth2Interface::Base36Encode(
 		std::chrono::duration_cast<std::chrono::milliseconds>(
 		TimingUtility::Clock::now().time_since_epoch()).count()));
-	id.append(".");
+	id.append(_T("."));
 	id.append(OAuth2Interface::Base36Encode((int64_t)rand() * (int64_t)rand()
 		* (int64_t)rand() * (int64_t)rand()));
-	id.append("@");
-	id.append(ExtractDomain(loginInfo.localEmail));
-	id.append(">");
+	id.append(_T("@"));
+	id.append(UString::ToStringType(ExtractDomain(loginInfo.localEmail)));
+	id.append(_T(">"));
 
-	return id;
+	return UString::ToNarrowString(id);
 }
 
 //==========================================================================
@@ -501,10 +502,11 @@ std::string EmailSender::GenerateMessageID() const
 //==========================================================================
 std::string EmailSender::GenerateBoundryID()
 {
-	return OAuth2Interface::Base36Encode((int64_t)rand() * (int64_t)rand()
+	return UString::ToNarrowString(OAuth2Interface::Base36Encode(
+		(int64_t)rand() * (int64_t)rand()
 		* (int64_t)rand() * (int64_t)rand()
 		* (int64_t)rand() * (int64_t)rand()
-		* (int64_t)rand() * (int64_t)rand());
+		* (int64_t)rand() * (int64_t)rand()));
 }
 
 //==========================================================================
@@ -675,7 +677,7 @@ void EmailSender::DeletePayloadText()
 		for (i = 0; i < payloadLines; i++)
 			delete [] payloadText[i];
 		delete [] payloadText;
-		payloadText = NULL;
+		payloadText = nullptr;
 	}
 }
 

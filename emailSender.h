@@ -3,12 +3,15 @@
 // Auth:  K. Loux
 // Desc:  Class which uses libcurl to send e-mails.
 
-#ifndef _EMAIL_SENDER_H_
-#define _EMAIL_SENDER_H_
+#ifndef EMAIL_SENDER_H_
+#define EMAIL_SENDER_H_
 
 // Standard C++ headers
-#include <vector>
 #include <string>
+#include <vector>
+
+// Local headers
+#include "utilities/uString.h"
 
 class EmailSender
 {
@@ -25,7 +28,7 @@ public:
 
 	EmailSender(const std::string &subject, const std::string &message, const std::string &imageFileName,
 		const std::vector<std::string> &recipients, const LoginInfo &loginInfo, const bool &useHTML,
-		const bool &testMode, std::ostream &outStream = std::cout);
+		const bool &testMode, UString::OStream &outStream = Cout);
 	virtual ~EmailSender();
 
 	bool Send();
@@ -38,7 +41,7 @@ private:
 	const LoginInfo loginInfo;
 	const bool useHTML;
 	const bool testMode;
-	std::ostream &outStream;
+	UString::OStream &outStream;
 
 	struct UploadStatus
 	{
@@ -67,4 +70,4 @@ private:
 	static std::string GetExtension(const std::string &s);
 };
 
-#endif// _EMAIL_SENDER_H_
+#endif// EMAIL_SENDER_H_

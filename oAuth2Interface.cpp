@@ -47,7 +47,7 @@
 //		None
 //
 //==========================================================================
-OAuth2Interface *OAuth2Interface::singleton = NULL;
+OAuth2Interface *OAuth2Interface::singleton = nullptr;
 
 //==========================================================================
 // Class:			OAuth2Interface
@@ -135,7 +135,7 @@ void OAuth2Interface::Destroy()
 	if (singleton)
 		delete singleton;
 
-	singleton = NULL;
+	singleton = nullptr;
 }
 
 //==========================================================================
@@ -202,7 +202,7 @@ UString::String OAuth2Interface::RequestRefreshToken()
 
 		UString::String queryString = AssembleAccessRequestQueryString(authResponse.deviceCode);
 
-		time_t startTime = time(NULL);
+		time_t startTime = time(nullptr);
 		time_t now = startTime;
 		while (!HandleRefreshRequestResponse(readBuffer, true))
 		{
@@ -211,7 +211,7 @@ UString::String OAuth2Interface::RequestRefreshToken()
 #else
 			sleep(authResponse.interval);
 #endif
-			now = time(NULL);
+			now = time(nullptr);
 			if (difftime(now, startTime) > authResponse.expiresIn)
 			{
 				Cerr << "Request timed out - restart application to start again\n";
