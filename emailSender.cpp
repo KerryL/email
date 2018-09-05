@@ -512,8 +512,6 @@ std::string EmailSender::Base64Encode(const std::string &fileName, unsigned int 
 	while (inFile >> uc, !inFile.eof())
 		v.push_back(uc);
 
-	inFile.close();
-
 	const char* charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 	unsigned int i;
