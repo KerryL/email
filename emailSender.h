@@ -9,6 +9,7 @@
 // Standard C++ headers
 #include <string>
 #include <vector>
+#include <memory>
 
 // Local headers
 #include "utilities/uString.h"
@@ -29,7 +30,6 @@ public:
 	EmailSender(const std::string &subject, const std::string &message, const std::string &imageFileName,
 		const std::vector<std::string> &recipients, const LoginInfo &loginInfo, const bool &useHTML,
 		const bool &testMode, UString::OStream &outStream = Cout);
-	virtual ~EmailSender();
 
 	bool Send();
 
@@ -51,15 +51,10 @@ private:
 
 	static size_t PayloadSource(void *ptr, size_t size, size_t nmemb, void *userp);
 	void GeneratePayloadText();
-	char* AddPayloadText(const std::string &s) const;
-	char **payloadText;
-	unsigned int payloadLines;
-	void DeletePayloadText();
+	std::vector<std::string> payloadText;
 
 	void GenerateMessageText();
-	char **messageText;
-	unsigned int messageLines;
-	void DeleteMessageText();
+	std::vector<std::string> messageText;
 
 	std::string NameToHeaderAddress(const std::string &s);
 	static std::string GetDateString();

@@ -71,34 +71,6 @@ EmailSender::EmailSender(const std::string &subject, const std::string &message,
 		outStream << "Using cURL version:" << std::endl << curl_version() << std::endl;
 		outStream << "Image file name: '" << UString::ToStringType(imageFileName) << "'." << std::endl;
 	}
-
-	payloadLines = 0;
-	payloadText = nullptr;
-
-	messageLines = 0;
-	messageText = nullptr;
-}
-
-//==========================================================================
-// Class:			EmailSender
-// Function:		~EmailSender
-//
-// Description:		Destructor for EmailSender class.
-//
-// Input Arguments:
-//		None
-//
-// Output Arguments:
-//		None
-//
-// Return Value:
-//		None
-//
-//==========================================================================
-EmailSender::~EmailSender()
-{
-	DeletePayloadText();
-	DeleteMessageText();
 }
 
 //==========================================================================
@@ -203,10 +175,10 @@ bool EmailSender::Send()
 //==========================================================================
 void EmailSender::GeneratePayloadText()
 {
-	DeletePayloadText();
+	payloadText.clear();
 	GenerateMessageText();
 
-	payloadLines = 7 + messageLines;
+	unsigned int payloadLines(7 + messageText.size());
 	std::string base64File;
 	if (!imageFileName.empty())
 	{
@@ -218,7 +190,7 @@ void EmailSender::GeneratePayloadText()
 	else if (useHTML)
 		payloadLines += 11;
 
-	payloadText = new char*[payloadLines];
+	payloadText.resize(payloadLines);
 
 	std::string list(NameToHeaderAddress(recipients[0]));
 	unsigned int i, k(0);
@@ -228,42 +200,42 @@ void EmailSender::GeneratePayloadText()
 	std::string boundary(GenerateBoundryID());
 
 	// Normal header
-	payloadText[k] = AddPayloadText("Date: " + GetDateString() + "\n"); k++;
-	payloadText[k] = AddPayloadText("To: " + list + "\n"); k++;
-	payloadText[k] = AddPayloadText("From: " + loginInfo.localEmail + "\n"); k++;
-	payloadText[k] = AddPayloadText("Message-ID: " + GenerateMessageID() + "\n"); k++;
-	payloadText[k] = AddPayloadText(("Subject: " + subject + "\n").c_str()); k++;
+	payloadText[k] = "Date: " + GetDateString() + "\n"; k++;
+	payloadText[k] = "To: " + list + "\n"; k++;
+	payloadText[k] = "From: " + loginInfo.localEmail + "\n"; k++;
+	payloadText[k] = "Message-ID: " + GenerateMessageID() + "\n"; k++;
+	payloadText[k] = "Subject: " + subject + "\n"; k++;
 
 	// Special header contents when attaching a file
 	if (!imageFileName.empty())
 	{
-		payloadText[k] = AddPayloadText("Content-Type: multipart/mixed; boundary=" + boundary + "\n"); k++;
-		payloadText[k] = AddPayloadText("MIME-Version: 1.0\n"); k++;
-		payloadText[k] = AddPayloadText("\n"); k++;
-		payloadText[k] = AddPayloadText("This is a multi-part message in MIME format.\n"); k++;
-		payloadText[k] = AddPayloadText("\n"); k++;
-		payloadText[k] = AddPayloadText("--" + boundary + "\n"); k++;
-		payloadText[k] = AddPayloadText("Content-Type: text/plain; charset=ISO-8859-1\n"); k++;
-		payloadText[k] = AddPayloadText("Content-Transfer-Encoding: quoted-printable\n"); k++;
+		payloadText[k] = "Content-Type: multipart/mixed; boundary=" + boundary + "\n"; k++;
+		payloadText[k] = "MIME-Version: 1.0\n"; k++;
+		payloadText[k] = "\n"; k++;
+		payloadText[k] = "This is a multi-part message in MIME format.\n"; k++;
+		payloadText[k] = "\n"; k++;
+		payloadText[k] = "--" + boundary + "\n"; k++;
+		payloadText[k] = "Content-Type: text/plain; charset=ISO-8859-1\n"; k++;
+		payloadText[k] = "Content-Transfer-Encoding: quoted-printable\n"; k++;
 	}
 	else if (useHTML)
 	{
-		payloadText[k] = AddPayloadText("Content-Type: text/html; charset=ISO-8859-1\n"); k++;
-		payloadText[k] = AddPayloadText("Content-Transfer-Encoding: quoted-printable\n"); k++;
-		payloadText[k] = AddPayloadText("MIME-Version: 1.0\n"); k++;
-		payloadText[k] = AddPayloadText("\n"); k++;
-		payloadText[k] = AddPayloadText("<html>\n"); k++;
-		payloadText[k] = AddPayloadText("<head>\n"); k++;
-		payloadText[k] = AddPayloadText("<meta http-equiv=3D\"Content-Type\" content=3D\"text/html; charset=3D\"ISO-8859-1\">\n"); k++;
-		payloadText[k] = AddPayloadText("</head>\n"); k++;
-		payloadText[k] = AddPayloadText("<body>\n"); k++;
+		payloadText[k] = "Content-Type: text/html; charset=ISO-8859-1\n"; k++;
+		payloadText[k] = "Content-Transfer-Encoding: quoted-printable\n"; k++;
+		payloadText[k] = "MIME-Version: 1.0\n"; k++;
+		payloadText[k] = "\n"; k++;
+		payloadText[k] = "<html>\n"; k++;
+		payloadText[k] = "<head>\n"; k++;
+		payloadText[k] = "<meta http-equiv=3D\"Content-Type\" content=3D\"text/html; charset=3D\"ISO-8859-1\">\n"; k++;
+		payloadText[k] = "</head>\n"; k++;
+		payloadText[k] = "<body>\n"; k++;
 	}
 
 	// Normal body
-	payloadText[k] = AddPayloadText("\n"); k++;// Empty line to divide headers from body
-	for (i = 0; i < messageLines; i++)
+	payloadText[k] = "\n"; k++;// Empty line to divide headers from body
+	for (const auto& l : message)
 	{
-		payloadText[k] = AddPayloadText(messageText[i]);
+		payloadText[k] = l;
 		k++;
 	}
 
@@ -272,33 +244,33 @@ void EmailSender::GeneratePayloadText()
 	{
 		std::string image = imageFileName.substr(imageFileName.find_last_of('/') + 1);
 
-		payloadText[k] = AddPayloadText("\n"); k++;
-		payloadText[k] = AddPayloadText("--" + boundary + "\n"); k++;
-		payloadText[k] = AddPayloadText("Content-Type: image/" + GetExtension(imageFileName) + ";\n"); k++;
-		payloadText[k] = AddPayloadText("	name=\"" + image + "\"\n"); k++;
-		payloadText[k] = AddPayloadText("Content-Transfer-Encoding: base64\n"); k++;
-		payloadText[k] = AddPayloadText("Content-Disposition: attachment;\n"); k++;
-		payloadText[k] = AddPayloadText("	filename=\"" + image + "\";\n"); k++;
+		payloadText[k] = "\n"; k++;
+		payloadText[k] = "--" + boundary + "\n"; k++;
+		payloadText[k] = "Content-Type: image/" + GetExtension(imageFileName) + ";\n"; k++;
+		payloadText[k] = "	name=\"" + image + "\"\n"; k++;
+		payloadText[k] = "Content-Transfer-Encoding: base64\n"; k++;
+		payloadText[k] = "Content-Disposition: attachment;\n"; k++;
+		payloadText[k] = "	filename=\"" + image + "\";\n"; k++;
 
 		size_t cr(0), lastCr;
 		while (cr != std::string::npos)
 		{
 			lastCr = cr;
 			cr = base64File.find("\n", lastCr + 1);
-			payloadText[k] = AddPayloadText(base64File.substr(lastCr,
-				std::min(cr - lastCr, (size_t)base64File.size() - lastCr))); k++;
+			payloadText[k] = base64File.substr(lastCr,
+				std::min(cr - lastCr, (size_t)base64File.size() - lastCr)); k++;
 		}
-		payloadText[k] = AddPayloadText("--" + boundary + "\n"); k++;
+		payloadText[k] = "--" + boundary + "\n"; k++;
 	}
 	else if (useHTML)
 	{
 		// TODO:  Should it be the caller's responsiblity to already have
 		// formatted the message to include these tags?
-		payloadText[k] = AddPayloadText("</body>\n"); k++;
-		payloadText[k] = AddPayloadText("</html>\n"); k++;
+		payloadText[k] = "</body>\n"; k++;
+		payloadText[k] = "</html>\n"; k++;
 	}
 
-	payloadText[k] = AddPayloadText("\0"); k++;
+	payloadText[k] = "\0"; k++;
 
 	assert(k == payloadLines);
 }
@@ -321,76 +293,12 @@ void EmailSender::GeneratePayloadText()
 //==========================================================================
 void EmailSender::GenerateMessageText()
 {
-	DeleteMessageText();
+	messageText.clear();
 	std::istringstream mStream(message);
-	std::vector<std::string> mVector;
 	std::string line;
 
-	while (!mStream.eof())
-	{
-		std::getline(mStream, line);
-		mVector.push_back(line);
-	}
-
-	messageLines = mVector.size();
-	messageText = new char*[messageLines];
-
-	unsigned int i;
-	for (i = 0; i < messageLines; i++)
-		messageText[i] = AddPayloadText(mVector[i] + "\n");
-}
-
-//==========================================================================
-// Class:			EmailSender
-// Function:		DeleteMessageText
-//
-// Description:		Deletes the message text buffer array.
-//
-// Input Arguments:
-//		None
-//
-// Output Arguments:
-//		None
-//
-// Return Value:
-//		None
-//
-//==========================================================================
-void EmailSender::DeleteMessageText()
-{
-	if (messageText)
-	{
-		unsigned int i;
-		for (i = 0; i < messageLines - 1; i++)
-			delete [] messageText[i];
-		delete [] messageText;
-		messageText = nullptr;
-	}
-}
-
-//==========================================================================
-// Class:			EmailSender
-// Function:		AddPayloadText
-//
-// Description:		Adds the specified text to the payload buffer.
-//
-// Input Arguments:
-//		s		= const std::string &s
-//
-// Output Arguments:
-//		None
-//
-// Return Value:
-//		char*
-//
-//==========================================================================
-char* EmailSender::AddPayloadText(const std::string &s) const
-{
-	char *temp = new char[s.size() + 1];
-	memcpy(temp, s.c_str(), s.size());
-	temp[s.size()] = '\0';
-
-	return temp;
+	while (std::getline(mStream, line))
+		messageText.push_back(line + '\n');
 }
 
 //==========================================================================
@@ -530,13 +438,13 @@ std::string EmailSender::GenerateBoundryID()
 //==========================================================================
 size_t EmailSender::PayloadSource(void *ptr, size_t size, size_t nmemb, void *userp)
 {
-	struct UploadStatus *uploadCtx = (struct UploadStatus*)userp;
+	struct UploadStatus *uploadCtx = static_cast<struct UploadStatus*>(userp);
 	const char *data;
 
 	if ((size == 0) || (nmemb == 0) || ((size * nmemb) < 1))
 		return 0;
 
-	data = uploadCtx->et->payloadText[uploadCtx->linesRead];
+	data = uploadCtx->et->payloadText[uploadCtx->linesRead].c_str();
 	if (data)
 	{
 		size_t len = strlen(data);
@@ -651,34 +559,6 @@ std::string EmailSender::Base64Encode(const std::string &fileName, unsigned int 
 	buf += "\n";
 
 	return buf;
-}
-
-//==========================================================================
-// Class:			EmailSender
-// Function:		DeletePayloadText
-//
-// Description:		Deletes the payload text buffer.
-//
-// Input Arguments:
-//		None
-//
-// Output Arguments:
-//		None
-//
-// Return Value:
-//		None
-//
-//==========================================================================
-void EmailSender::DeletePayloadText()
-{
-	if (payloadText)
-	{
-		unsigned int i;
-		for (i = 0; i < payloadLines; i++)
-			delete [] payloadText[i];
-		delete [] payloadText;
-		payloadText = nullptr;
-	}
 }
 
 //==========================================================================
