@@ -8,7 +8,6 @@
 #define OAUTH2_INTERFACE_H_
 
 // Standard C++ headers
-#include <string>
 #include <chrono>
 
 // email headers
