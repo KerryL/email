@@ -77,7 +77,7 @@ private:
 
 	UString::String GenerateSecurityStateKey() const;
 	bool RedirectURIIsLocal() const;
-	bool IsLimitedInput() { return redirectURI.empty(); }
+	bool IsLimitedInput() const { return redirectURI.empty(); }
 	unsigned short StripPortFromLocalRedirectURI() const;
 	UString::String StripAddressFromLocalRedirectURI() const;
 

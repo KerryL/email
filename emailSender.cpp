@@ -252,10 +252,10 @@ void EmailSender::GeneratePayloadText()
 		payloadText[k] = "Content-Disposition: attachment;\n"; k++;
 		payloadText[k] = "	filename=\"" + image + "\";\n"; k++;
 
-		size_t cr(0), lastCr;
+		size_t cr(0);
 		while (cr != std::string::npos)
 		{
-			lastCr = cr;
+			const size_t lastCr(cr);
 			cr = base64File.find("\n", lastCr + 1);
 			payloadText[k] = base64File.substr(lastCr,
 				std::min(cr - lastCr, (size_t)base64File.size() - lastCr)); k++;
@@ -517,22 +517,21 @@ std::string EmailSender::Base64Encode(const std::string &fileName, unsigned int 
 	unsigned int i;
 	lines = 0;
 	std::string buf;
-	unsigned char oct1, oct2, oct3, hex1, hex2, hex3, hex4;
 	for (i = 0; i < v.size(); i += 3)
 	{
-		oct1 = v[i];
-		oct2 = 0;
-		oct3 = 0;
+		unsigned char oct1(v[i]);
+		unsigned char oct2(0);
+		unsigned char oct3(0);
 
 		if (i + 1 < v.size())
 			oct2 = v[i + 1];
 		if (i + 2 < v.size())
 			oct3 = v[i + 2];
 
-		hex1 = oct1 >> 2;
-		hex2 = ((oct1 & 0x3) << 4) | (oct2 >> 4);
-		hex3 = ((oct2 & 0xf) << 2) | (oct3 >> 6);
-		hex4 = oct3 & 0x3f;
+		unsigned char hex1(oct1 >> 2);
+		unsigned char hex2(((oct1 & 0x3) << 4) | (oct2 >> 4));
+		unsigned char hex3(((oct2 & 0xf) << 2) | (oct3 >> 6));
+		unsigned char hex4(oct3 & 0x3f);
 
 		buf += charset[hex1];
 		buf += charset[hex2];

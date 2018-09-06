@@ -25,7 +25,7 @@ typedef void CURL;
 class JSONInterface
 {
 public:
-	JSONInterface(const UString::String& userAgent = UString::String());
+	explicit JSONInterface(const UString::String& userAgent = UString::String());
 	virtual ~JSONInterface() = default;
 
 	void SetCACertificatePath(const UString::String& path) { caCertificatePath = path; }

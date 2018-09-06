@@ -45,8 +45,8 @@ private:
 
 	struct UploadStatus
 	{
-		int linesRead;
-		EmailSender* et;
+		int linesRead = 0;
+		EmailSender* et = nullptr;
 	} uploadCtx;
 
 	static size_t PayloadSource(void *ptr, size_t size, size_t nmemb, void *userp);
