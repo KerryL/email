@@ -72,26 +72,6 @@ OAuth2Interface::OAuth2Interface()
 
 //==========================================================================
 // Class:			OAuth2Interface
-// Function:		~OAuth2Interface
-//
-// Description:		Destructor for OAuth2Interface class.
-//
-// Input Arguments:
-//		None
-//
-// Output Arguments:
-//		None
-//
-// Return Value:
-//		None
-//
-//==========================================================================
-OAuth2Interface::~OAuth2Interface()
-{
-}
-
-//==========================================================================
-// Class:			OAuth2Interface
 // Function:		Get (static)
 //
 // Description:		Access method for singleton pattern.

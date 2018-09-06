@@ -45,7 +45,6 @@ public:
 
 private:
 	OAuth2Interface();
-	~OAuth2Interface();
 
 	UString::String authURL, tokenURL;
 	UString::String responseType;
@@ -79,7 +78,7 @@ private:
 
 	UString::String GenerateSecurityStateKey() const;
 	bool RedirectURIIsLocal() const;
-	bool IsLimitedInput() { return redirectURI.empty(); };
+	bool IsLimitedInput() { return redirectURI.empty(); }
 	unsigned short StripPortFromLocalRedirectURI() const;
 	UString::String StripAddressFromLocalRedirectURI() const;
 
