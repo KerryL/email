@@ -37,6 +37,8 @@ public:
 
 	void SetRefreshToken(const UString::String &refreshTokenIn = UString::String());
 
+	void SetSuccessMessage(const UString::String& message) { successMessage = message; }
+
 	UString::String GetRefreshToken() const { return refreshToken; }
 	UString::String GetAccessToken();
 
@@ -56,6 +58,8 @@ private:
 
 	UString::String refreshToken;
 	UString::String accessToken;
+
+	UString::String successMessage = _T("API access successfulley authorized.");
 
 	UString::String RequestRefreshToken();
 
@@ -86,7 +90,7 @@ private:
 	static OAuth2Interface *singleton;
 	static UString::String ExtractAuthCodeFromGETRequest(const std::string& rawRequest);
 
-	static std::string BuildHTTPSuccessResponse();
+	static std::string BuildHTTPSuccessResponse(const UString::String& successMessage);
 };
 
 #endif// OAUTH2_INTERFACE_H_

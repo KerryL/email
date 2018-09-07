@@ -253,7 +253,7 @@ UString::String OAuth2Interface::RequestRefreshToken()
 				return UString::String();
 
 			authorizationCode = ExtractAuthCodeFromGETRequest(message);
-			const auto successResponse(BuildHTTPSuccessResponse());
+			const auto successResponse(BuildHTTPSuccessResponse(successMessage));
 			assert(successResponse.length() < std::numeric_limits<unsigned int>::max());
 			if (!webSocket.TCPSend(reinterpret_cast<const CPPSocket::DataType*>(successResponse.c_str()), static_cast<int>(successResponse.length())))
 				Cout << "Warning:  Authorization code response failed to send" << std::endl;
@@ -293,9 +293,9 @@ UString::String OAuth2Interface::ExtractAuthCodeFromGETRequest(const std::string
 	return request.substr(start + startKey.length(), end - start - startKey.length());
 }
 
-std::string OAuth2Interface::BuildHTTPSuccessResponse()
+std::string OAuth2Interface::BuildHTTPSuccessResponse(const UString::String& successMessage)
 {
-	std::string body("<html><body><h1>Success!</h1><p>eBirdDataProcess was successfully authorized to access Google Fusion Tables.</p></body></html>");
+	std::string body("<html><body><h1>Success!</h1><p>" + UString::ToNarrowString(successMessage) + "</p></body></html>");
 
 	std::ostringstream headerStream;
 	headerStream << "HTTP/1.1 200 OK\n"

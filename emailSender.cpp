@@ -193,9 +193,9 @@ void EmailSender::GeneratePayloadText()
 	payloadText.resize(payloadLines);
 
 	std::string list(NameToHeaderAddress(recipients[0]));
-	unsigned int i, k(0);
-	for (i = 1; i < recipients.size(); i++)
-		list.append(", " + NameToHeaderAddress(recipients[i]));
+	unsigned int k(0);
+	for (const auto& r : recipients)
+		list.append(", " + NameToHeaderAddress(r));
 
 	std::string boundary(GenerateBoundryID());
 
@@ -233,9 +233,11 @@ void EmailSender::GeneratePayloadText()
 
 	// Normal body
 	payloadText[k] = "\n"; k++;// Empty line to divide headers from body
-	for (const auto& l : message)
+	std::istringstream ss(message);
+	std::string line;
+	while (std::getline(ss, line))
 	{
-		payloadText[k] = l;
+		payloadText[k] = line;
 		k++;
 	}
 
@@ -500,9 +502,9 @@ std::string EmailSender::ExtractDomain(const std::string &s)
 std::string EmailSender::Base64Encode(const std::string &fileName, unsigned int &lines)
 {
 	lines = 1;
-	std::ifstream inFile(fileName.c_str(), std::ios::in | std::ios::binary);
+	std::ifstream inFile(fileName.c_str(), std::ios::binary);
 	if (!inFile.is_open() || !inFile.good())
-		return "";
+		return std::string();
 
 	// FIXME:  Perofrmance could be improved by pre-allocating the return buffer
 
