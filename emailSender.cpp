@@ -139,13 +139,12 @@ bool EmailSender::Send()
 	curl_easy_setopt(curl, CURLOPT_USERNAME, loginInfo.localEmail.c_str());
 	curl_easy_setopt(curl, CURLOPT_MAIL_FROM, ("<" + loginInfo.localEmail + ">").c_str());
 
-	unsigned int i;
-	for (i = 0; i < recipients.size(); i++)
-		recipientList = curl_slist_append(recipientList, ("<" + recipients[i] + ">").c_str());
-    curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipientList);
+	for (const auto& r : recipients)
+		recipientList = curl_slist_append(recipientList, ("<" + r + ">").c_str());
+	curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipientList);
 
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, &EmailSender::PayloadSource);
-    curl_easy_setopt(curl, CURLOPT_READDATA, &uploadCtx);
+	curl_easy_setopt(curl, CURLOPT_READDATA, &uploadCtx);
 
     result = curl_easy_perform(curl);
     if(result != CURLE_OK)
@@ -192,10 +191,14 @@ void EmailSender::GeneratePayloadText()
 
 	payloadText.resize(payloadLines);
 
-	std::string list(NameToHeaderAddress(recipients[0]));
+	std::string list;
 	unsigned int k(0);
 	for (const auto& r : recipients)
-		list.append(", " + NameToHeaderAddress(r));
+	{
+		if (!list.empty())
+			list.append(", ");
+		list.append(NameToHeaderAddress(r));
+	}
 
 	std::string boundary(GenerateBoundryID());
 

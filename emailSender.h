@@ -37,7 +37,7 @@ private:
 	const std::string subject;
 	const std::string message;
 	const std::string imageFileName;
-	const std::vector<std::string> &recipients;
+	const std::vector<std::string> recipients;
 	const LoginInfo loginInfo;
 	const bool useHTML;
 	const bool testMode;
