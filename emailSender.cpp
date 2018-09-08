@@ -119,7 +119,7 @@ bool EmailSender::Send()
 	else
 	{
 		curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
-		curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, OAuth2Interface::Get().GetAccessToken().c_str());
+		curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, UString::ToNarrowString(OAuth2Interface::Get().GetAccessToken()).c_str());
 	}
 
 	if (testMode)
