@@ -44,7 +44,7 @@
 //		subject			= const std::string&
 //		message			= const std::string&
 //		imageFileName	= const std::string&
-//		recipients		= const std::vector<std::string>&
+//		recipients		= const std::vector<AddressInfo>&
 //		loginInfo		= const SystemEmailConfiguration
 //		useHTML			= const bool&
 //		testMode		= const bool&
@@ -57,7 +57,7 @@
 //
 //==========================================================================
 EmailSender::EmailSender(const std::string &subject, const std::string &message,
-	const std::string &imageFileName, const std::vector<std::string> &recipients,
+	const std::string &imageFileName, const std::vector<AddressInfo> &recipients,
 	const LoginInfo &loginInfo, const bool &useHTML, const bool& testMode,
 	UString::OStream &outStream) : subject(subject), message(message), imageFileName(imageFileName),
 	recipients(recipients), loginInfo(loginInfo), useHTML(useHTML), testMode(testMode),
@@ -130,7 +130,7 @@ bool EmailSender::Send()
 		{
 			if (i > 0)
 				outStream << ", ";
-			outStream << UString::ToStringType(recipients[i]);
+			outStream << UString::ToStringType(recipients[i].address);
 		}
 		outStream << std::endl;
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
@@ -140,7 +140,7 @@ bool EmailSender::Send()
 	curl_easy_setopt(curl, CURLOPT_MAIL_FROM, ("<" + loginInfo.localEmail + ">").c_str());
 
 	for (const auto& r : recipients)
-		recipientList = curl_slist_append(recipientList, ("<" + r + ">").c_str());
+		recipientList = curl_slist_append(recipientList, ("<" + r.address + ">").c_str());
 	curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipientList);
 
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, &EmailSender::PayloadSource);
@@ -314,7 +314,7 @@ void EmailSender::GenerateMessageText()
 //					user@domain (Name)).
 //
 // Input Arguments:
-//		s		= const std::string &s
+//		a		= const AddressInfo
 //
 // Output Arguments:
 //		None
@@ -323,9 +323,9 @@ void EmailSender::GenerateMessageText()
 //		std::string
 //
 //==========================================================================
-std::string EmailSender::NameToHeaderAddress(const std::string &s)
+std::string EmailSender::NameToHeaderAddress(const AddressInfo& a)
 {
-	return s + " (" + s + ")";
+	return a.displayName + " (" + a.address + ")";
 }
 
 //==========================================================================
