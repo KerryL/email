@@ -236,11 +236,9 @@ void EmailSender::GeneratePayloadText()
 
 	// Normal body
 	payloadText[k] = "\n"; k++;// Empty line to divide headers from body
-	std::istringstream ss(message);
-	std::string line;
-	while (std::getline(ss, line))
+	for (const auto& messageLine : messageText)
 	{
-		payloadText[k] = line;
+		payloadText[k] = messageLine;
 		k++;
 	}
 
