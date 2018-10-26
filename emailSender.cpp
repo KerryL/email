@@ -44,7 +44,7 @@
 //		subject			= const std::string&
 //		message			= const std::string&
 //		imageFileName	= const std::string&
-//		recipients		= const std::vector<std::string>&
+//		recipients		= const std::vector<AddressInfo>&
 //		loginInfo		= const SystemEmailConfiguration
 //		useHTML			= const bool&
 //		testMode		= const bool&
@@ -57,7 +57,7 @@
 //
 //==========================================================================
 EmailSender::EmailSender(const std::string &subject, const std::string &message,
-	const std::string &imageFileName, const std::vector<std::string> &recipients,
+	const std::string &imageFileName, const std::vector<AddressInfo> &recipients,
 	const LoginInfo &loginInfo, const bool &useHTML, const bool& testMode,
 	UString::OStream &outStream) : subject(subject), message(message), imageFileName(imageFileName),
 	recipients(recipients), loginInfo(loginInfo), useHTML(useHTML), testMode(testMode),
@@ -119,7 +119,7 @@ bool EmailSender::Send()
 	else
 	{
 		curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
-		curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, OAuth2Interface::Get().GetAccessToken().c_str());
+		curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, UString::ToNarrowString(OAuth2Interface::Get().GetAccessToken()).c_str());
 	}
 
 	if (testMode)
@@ -130,7 +130,7 @@ bool EmailSender::Send()
 		{
 			if (i > 0)
 				outStream << ", ";
-			outStream << UString::ToStringType(recipients[i]);
+			outStream << UString::ToStringType(recipients[i].address);
 		}
 		outStream << std::endl;
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
@@ -139,13 +139,12 @@ bool EmailSender::Send()
 	curl_easy_setopt(curl, CURLOPT_USERNAME, loginInfo.localEmail.c_str());
 	curl_easy_setopt(curl, CURLOPT_MAIL_FROM, ("<" + loginInfo.localEmail + ">").c_str());
 
-	unsigned int i;
-	for (i = 0; i < recipients.size(); i++)
-		recipientList = curl_slist_append(recipientList, ("<" + recipients[i] + ">").c_str());
-    curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipientList);
+	for (const auto& r : recipients)
+		recipientList = curl_slist_append(recipientList, ("<" + r.address + ">").c_str());
+	curl_easy_setopt(curl, CURLOPT_MAIL_RCPT, recipientList);
 
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, &EmailSender::PayloadSource);
-    curl_easy_setopt(curl, CURLOPT_READDATA, &uploadCtx);
+	curl_easy_setopt(curl, CURLOPT_READDATA, &uploadCtx);
 
     result = curl_easy_perform(curl);
     if(result != CURLE_OK)
@@ -192,10 +191,14 @@ void EmailSender::GeneratePayloadText()
 
 	payloadText.resize(payloadLines);
 
-	std::string list(NameToHeaderAddress(recipients[0]));
-	unsigned int i, k(0);
-	for (i = 1; i < recipients.size(); i++)
-		list.append(", " + NameToHeaderAddress(recipients[i]));
+	std::string list;
+	unsigned int k(0);
+	for (const auto& r : recipients)
+	{
+		if (!list.empty())
+			list.append(", ");
+		list.append(NameToHeaderAddress(r));
+	}
 
 	std::string boundary(GenerateBoundryID());
 
@@ -233,9 +236,9 @@ void EmailSender::GeneratePayloadText()
 
 	// Normal body
 	payloadText[k] = "\n"; k++;// Empty line to divide headers from body
-	for (const auto& l : message)
+	for (const auto& messageLine : messageText)
 	{
-		payloadText[k] = l;
+		payloadText[k] = messageLine;
 		k++;
 	}
 
@@ -252,10 +255,10 @@ void EmailSender::GeneratePayloadText()
 		payloadText[k] = "Content-Disposition: attachment;\n"; k++;
 		payloadText[k] = "	filename=\"" + image + "\";\n"; k++;
 
-		size_t cr(0), lastCr;
+		size_t cr(0);
 		while (cr != std::string::npos)
 		{
-			lastCr = cr;
+			const size_t lastCr(cr);
 			cr = base64File.find("\n", lastCr + 1);
 			payloadText[k] = base64File.substr(lastCr,
 				std::min(cr - lastCr, (size_t)base64File.size() - lastCr)); k++;
@@ -309,7 +312,7 @@ void EmailSender::GenerateMessageText()
 //					user@domain (Name)).
 //
 // Input Arguments:
-//		s		= const std::string &s
+//		a		= const AddressInfo
 //
 // Output Arguments:
 //		None
@@ -318,9 +321,9 @@ void EmailSender::GenerateMessageText()
 //		std::string
 //
 //==========================================================================
-std::string EmailSender::NameToHeaderAddress(const std::string &s)
+std::string EmailSender::NameToHeaderAddress(const AddressInfo& a)
 {
-	return s + " (" + s + ")";
+	return a.displayName + " (" + a.address + ")";
 }
 
 //==========================================================================
@@ -500,9 +503,9 @@ std::string EmailSender::ExtractDomain(const std::string &s)
 std::string EmailSender::Base64Encode(const std::string &fileName, unsigned int &lines)
 {
 	lines = 1;
-	std::ifstream inFile(fileName.c_str(), std::ios::in | std::ios::binary);
+	std::ifstream inFile(fileName.c_str(), std::ios::binary);
 	if (!inFile.is_open() || !inFile.good())
-		return "";
+		return std::string();
 
 	// FIXME:  Perofrmance could be improved by pre-allocating the return buffer
 
@@ -517,22 +520,21 @@ std::string EmailSender::Base64Encode(const std::string &fileName, unsigned int 
 	unsigned int i;
 	lines = 0;
 	std::string buf;
-	unsigned char oct1, oct2, oct3, hex1, hex2, hex3, hex4;
 	for (i = 0; i < v.size(); i += 3)
 	{
-		oct1 = v[i];
-		oct2 = 0;
-		oct3 = 0;
+		unsigned char oct1(v[i]);
+		unsigned char oct2(0);
+		unsigned char oct3(0);
 
 		if (i + 1 < v.size())
 			oct2 = v[i + 1];
 		if (i + 2 < v.size())
 			oct3 = v[i + 2];
 
-		hex1 = oct1 >> 2;
-		hex2 = ((oct1 & 0x3) << 4) | (oct2 >> 4);
-		hex3 = ((oct2 & 0xf) << 2) | (oct3 >> 6);
-		hex4 = oct3 & 0x3f;
+		unsigned char hex1(oct1 >> 2);
+		unsigned char hex2(((oct1 & 0x3) << 4) | (oct2 >> 4));
+		unsigned char hex3(((oct2 & 0xf) << 2) | (oct3 >> 6));
+		unsigned char hex4(oct3 & 0x3f);
 
 		buf += charset[hex1];
 		buf += charset[hex2];

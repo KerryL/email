@@ -8,7 +8,6 @@
 #define OAUTH2_INTERFACE_H_
 
 // Standard C++ headers
-#include <string>
 #include <chrono>
 
 // email headers
@@ -38,6 +37,8 @@ public:
 
 	void SetRefreshToken(const UString::String &refreshTokenIn = UString::String());
 
+	void SetSuccessMessage(const UString::String& message) { successMessage = message; }
+
 	UString::String GetRefreshToken() const { return refreshToken; }
 	UString::String GetAccessToken();
 
@@ -45,7 +46,6 @@ public:
 
 private:
 	OAuth2Interface();
-	~OAuth2Interface();
 
 	UString::String authURL, tokenURL;
 	UString::String responseType;
@@ -58,6 +58,8 @@ private:
 
 	UString::String refreshToken;
 	UString::String accessToken;
+
+	UString::String successMessage = _T("API access successfulley authorized.");
 
 	UString::String RequestRefreshToken();
 
@@ -79,7 +81,7 @@ private:
 
 	UString::String GenerateSecurityStateKey() const;
 	bool RedirectURIIsLocal() const;
-	bool IsLimitedInput() { return redirectURI.empty(); };
+	bool IsLimitedInput() const { return redirectURI.empty(); }
 	unsigned short StripPortFromLocalRedirectURI() const;
 	UString::String StripAddressFromLocalRedirectURI() const;
 
@@ -88,7 +90,7 @@ private:
 	static OAuth2Interface *singleton;
 	static UString::String ExtractAuthCodeFromGETRequest(const std::string& rawRequest);
 
-	static std::string BuildHTTPSuccessResponse();
+	static std::string BuildHTTPSuccessResponse(const UString::String& successMessage);
 };
 
 #endif// OAUTH2_INTERFACE_H_

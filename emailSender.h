@@ -27,8 +27,14 @@ public:
 		std::string caCertificatePath;
 	};
 
+	struct AddressInfo
+	{
+		std::string address;
+		std::string displayName;
+	};
+
 	EmailSender(const std::string &subject, const std::string &message, const std::string &imageFileName,
-		const std::vector<std::string> &recipients, const LoginInfo &loginInfo, const bool &useHTML,
+		const std::vector<AddressInfo> &recipients, const LoginInfo &loginInfo, const bool &useHTML,
 		const bool &testMode, UString::OStream &outStream = Cout);
 
 	bool Send();
@@ -37,7 +43,7 @@ private:
 	const std::string subject;
 	const std::string message;
 	const std::string imageFileName;
-	const std::vector<std::string> &recipients;
+	const std::vector<AddressInfo> recipients;
 	const LoginInfo loginInfo;
 	const bool useHTML;
 	const bool testMode;
@@ -45,8 +51,8 @@ private:
 
 	struct UploadStatus
 	{
-		int linesRead;
-		EmailSender* et;
+		int linesRead = 0;
+		EmailSender* et = nullptr;
 	} uploadCtx;
 
 	static size_t PayloadSource(void *ptr, size_t size, size_t nmemb, void *userp);
@@ -56,7 +62,7 @@ private:
 	void GenerateMessageText();
 	std::vector<std::string> messageText;
 
-	std::string NameToHeaderAddress(const std::string &s);
+	std::string NameToHeaderAddress(const AddressInfo &a);
 	static std::string GetDateString();
 	std::string GenerateMessageID() const;
 	static std::string GenerateBoundryID();
