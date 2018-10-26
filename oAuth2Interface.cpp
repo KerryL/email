@@ -352,7 +352,7 @@ bool OAuth2Interface::ResponseContainsError(const UString::String &buffer)
 	cJSON *root(cJSON_Parse(UString::ToNarrowString(buffer).c_str()));
 	if (!root)
 	{
-		Cerr << "Failed to parse returned UString::String (ResponseContainsError())\n";
+		Cerr << "Failed to parse returned string (ResponseContainsError())\n";
 		if (verbose)
 			Cerr << buffer << '\n';
 		return true;
@@ -403,7 +403,7 @@ bool OAuth2Interface::HandleAuthorizationRequestResponse(
 	cJSON *root(cJSON_Parse(UString::ToNarrowString(buffer).c_str()));
 	if (!root)
 	{
-		Cerr << "Failed to parse returned UString::String (HandleAuthorizationRequestResponse())\n";
+		Cerr << "Failed to parse returned string (HandleAuthorizationRequestResponse())\n";
 		return false;
 	}
 
@@ -449,7 +449,7 @@ bool OAuth2Interface::HandleRefreshRequestResponse(const UString::String &buffer
 	if (!root)
 	{
 		if (!silent)
-			Cerr << "Failed to parse returned UString::String (HandleRefreshRequsetResponse())\n";
+			Cerr << "Failed to parse returned string (HandleRefreshRequsetResponse())\n";
 		return false;
 	}
 
@@ -487,7 +487,7 @@ bool OAuth2Interface::HandleAccessRequestResponse(const UString::String &buffer)
 	cJSON *root = cJSON_Parse(UString::ToNarrowString(buffer).c_str());
 	if (!root)
 	{
-		Cerr << "Failed to parse returned UString::String (HandleAccessRequestResponse())\n";
+		Cerr << "Failed to parse returned string (HandleAccessRequestResponse())\n";
 		return false;
 	}
 
