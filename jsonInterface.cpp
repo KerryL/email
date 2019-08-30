@@ -158,9 +158,9 @@ bool JSONInterface::DoCURLGet(const UString::String &url, std::string &response,
 		curl_easy_setopt(curl, CURLOPT_CAPATH, UString::ToNarrowString(caCertificatePath).c_str());
 	else
 	{
-		std::string curlCAFileEnvironmentVariable(std::getenv("CURL_CA_BUNDLE"));
-		if (!curlCAFileEnvironmentVariable.empty())
-			curl_easy_setopt(curl, CURLOPT_CAINFO, curlCAFileEnvironmentVariable.c_str());
+		const auto curlCAFileEnvironmentVariable(std::getenv("CURL_CA_BUNDLE"));
+		if (curlCAFileEnvironmentVariable)
+			curl_easy_setopt(curl, CURLOPT_CAINFO, curlCAFileEnvironmentVariable);
 	}
 
 	if (!userAgent.empty())
