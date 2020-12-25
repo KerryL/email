@@ -6,7 +6,6 @@
 // Standard C++ headers
 #include <cstdlib>
 #include <cassert>
-#include <iostream>
 #include <sstream>
 #include <ctime>
 #include <algorithm>
@@ -162,8 +161,7 @@ void OAuth2Interface::SetRefreshToken(const UString::String &refreshTokenIn)
 //==========================================================================
 UString::String OAuth2Interface::RequestRefreshToken()
 {
-	assert(!authURL.empty() &&
-		!tokenURL.empty());
+	assert(!authURL.empty() && !tokenURL.empty());
 
 	if (IsLimitedInput())
 	{
@@ -194,7 +192,7 @@ UString::String OAuth2Interface::RequestRefreshToken()
 			now = time(nullptr);
 			if (difftime(now, startTime) > authResponse.expiresIn)
 			{
-				Cerr << "Request timed out - restart application to start again\n";
+				*log << "Request timed out - restart application to start again" << std::endl;
 				return UString::String();
 			}
 
@@ -236,7 +234,7 @@ UString::String OAuth2Interface::RequestRefreshToken()
 		{
 			if (!webSocket.WaitForClientData(60000))
 			{
-				Cerr << "No response... aborting\n";
+				*log << "No response... aborting" << std::endl;
 				return UString::String();
 			}
 
@@ -256,7 +254,7 @@ UString::String OAuth2Interface::RequestRefreshToken()
 			const auto successResponse(BuildHTTPSuccessResponse(successMessage));
 			assert(successResponse.length() < std::numeric_limits<unsigned int>::max());
 			if (!webSocket.TCPSend(reinterpret_cast<const CPPSocket::DataType*>(successResponse.c_str()), static_cast<int>(successResponse.length())))
-				Cout << "Warning:  Authorization code response failed to send" << std::endl;
+				*log << "Warning:  Authorization code response failed to send" << std::endl;
 		}
 		else
 		{
@@ -269,12 +267,12 @@ UString::String OAuth2Interface::RequestRefreshToken()
 			ResponseContainsError(UString::ToStringType(readBuffer)) ||
 			!HandleRefreshRequestResponse(UString::ToStringType(readBuffer)))
 		{
-			Cerr << "Failed to obtain refresh token\n";
+			*log << "Failed to obtain refresh token" << std::endl;
 			return UString::String();
 		}
 	}
 
-	Cout << "Successfully obtained refresh token" << std::endl;
+	*log << "Successfully obtained refresh token" << std::endl;
 	return refreshToken;
 }
 
@@ -332,7 +330,7 @@ bool OAuth2Interface::ResponseContainsError(const UString::String &buffer)
 	cJSON *root(cJSON_Parse(UString::ToNarrowString(buffer).c_str()));
 	if (!root)
 	{
-		Cerr << "Failed to parse returned string (ResponseContainsError())\n";
+		*log << "Failed to parse returned string (ResponseContainsError())" << std::endl;
 		if (verbose)
 			Cerr << buffer << '\n';
 		return true;
@@ -343,11 +341,12 @@ bool OAuth2Interface::ResponseContainsError(const UString::String &buffer)
 	{
 		if (error.compare(_T("authorization_pending")) != 0)
 		{
-			Cerr << "Recieved error from OAuth server:  " << error;
+			UString::OStringStream ss;
+			ss << "Recieved error from OAuth server:  " << error;
 			UString::String description;
 			if (ReadJSON(root, _T("error_description"), description))
-				Cerr << " - " << description;
-			Cerr << '\n';
+				ss << " - " << description;
+			*log << ss.str() << std::endl;
 			cJSON_Delete(root);
 			return true;
 		}
@@ -383,7 +382,7 @@ bool OAuth2Interface::HandleAuthorizationRequestResponse(
 	cJSON *root(cJSON_Parse(UString::ToNarrowString(buffer).c_str()));
 	if (!root)
 	{
-		Cerr << "Failed to parse returned string (HandleAuthorizationRequestResponse())\n";
+		*log << "Failed to parse returned string (HandleAuthorizationRequestResponse())" << std::endl;
 		return false;
 	}
 
@@ -429,7 +428,7 @@ bool OAuth2Interface::HandleRefreshRequestResponse(const UString::String &buffer
 	if (!root)
 	{
 		if (!silent)
-			Cerr << "Failed to parse returned string (HandleRefreshRequsetResponse())\n";
+			*log << "Failed to parse returned string (HandleRefreshRequsetResponse())" << std::endl;
 		return false;
 	}
 
@@ -437,7 +436,7 @@ bool OAuth2Interface::HandleRefreshRequestResponse(const UString::String &buffer
 	if (!ReadJSON(root, _T("refresh_token"), refreshToken))
 	{
 		if (!silent)
-			Cerr << "Failed to read refresh token field from server" << std::endl;
+			*log << "Failed to read refresh token field from server" << std::endl;
 		cJSON_Delete(root);
 		return false;
 	}
@@ -467,7 +466,7 @@ bool OAuth2Interface::HandleAccessRequestResponse(const UString::String &buffer)
 	cJSON *root = cJSON_Parse(UString::ToNarrowString(buffer).c_str());
 	if (!root)
 	{
-		Cerr << "Failed to parse returned string (HandleAccessRequestResponse())\n";
+		*log << "Failed to parse returned string (HandleAccessRequestResponse())" << std::endl;
 		return false;
 	}
 
@@ -477,14 +476,14 @@ bool OAuth2Interface::HandleAccessRequestResponse(const UString::String &buffer)
 		!ReadJSON(root, _T("token_type"), tokenType) ||
 		!ReadJSON(root, _T("expires_in"), tokenValidDuration))
 	{
-		Cerr << "Failed to read all required fields from server\n";
+		*log << "Failed to read all required fields from server" << std::endl;
 		cJSON_Delete(root);
 		return false;
 	}
 
 	if (tokenType.compare(_T("Bearer")) != 0)
 	{
-		Cerr << "Expected token type 'Bearer', received '" << tokenType << "'\n";
+		*log << "Expected token type 'Bearer', received '" << tokenType << "'" << std::endl;
 		cJSON_Delete(root);
 		return false;
 	}
@@ -519,18 +518,18 @@ UString::String OAuth2Interface::GetAccessToken()
 	if (!accessToken.empty() && std::chrono::system_clock::now() < accessTokenValidUntilTime)
 		return accessToken;
 
-	Cout << "Access token is invalid - requesting a new one" << std::endl;
+	*log << "Access token is invalid - requesting a new one" << std::endl;
 
 	std::string readBuffer;
 	if (!DoCURLPost(tokenURL, UString::ToNarrowString(AssembleAccessRequestQueryString()), readBuffer) ||
 		ResponseContainsError(UString::ToStringType(readBuffer)) ||
 		!HandleAccessRequestResponse(UString::ToStringType(readBuffer)))
 	{
-		Cerr << "Failed to obtain access token" << std::endl;
+		*log << "Failed to obtain access token" << std::endl;
 		return UString::String();
 	}
 
-	Cout << "Successfully obtained new access token" << std::endl;
+	*log << "Successfully obtained new access token" << std::endl;
 	return accessToken;
 }
 

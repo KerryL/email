@@ -24,6 +24,8 @@ class OAuth2Interface : public JSONInterface
 public:
 	static OAuth2Interface& Get();
 	static void Destroy();
+	
+	void SetLoggingTarget(UString::OStream& newLog) { log = &newLog; }
 
 	void SetAuthenticationURL(const UString::String &authURLIn) { authURL = authURLIn; }
 	void SetTokenURL(const UString::String &tokenURLIn) { tokenURL = tokenURLIn; }
@@ -46,8 +48,11 @@ public:
 
 private:
 	OAuth2Interface();
+	
+	UString::OStream* log = &Cout;
 
-	UString::String authURL, tokenURL;
+	UString::String authURL;
+	UString::String tokenURL;
 	UString::String responseType;
 	UString::String clientID;
 	UString::String clientSecret;
