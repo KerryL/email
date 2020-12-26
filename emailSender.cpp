@@ -9,6 +9,8 @@
 #include <time.h>
 #include <sstream>
 #include <cstring>
+#include <algorithm>
+#include <cctype>
 
 // OS headers
 #ifdef _WIN32
@@ -41,13 +43,13 @@
 // Description:		Constructor for EmailSender class.
 //
 // Input Arguments:
-//		subject			= const std::string&
-//		message			= const std::string&
-//		imageFileName	= const std::string&
-//		recipients		= const std::vector<AddressInfo>&
-//		loginInfo		= const SystemEmailConfiguration
-//		useHTML			= const bool&
-//		testMode		= const bool&
+//		subject				= const std::string&
+//		message				= const std::string&
+//		attachmentFileName	= const std::string&
+//		recipients			= const std::vector<AddressInfo>&
+//		loginInfo			= const SystemEmailConfiguration
+//		useHTML				= const bool&
+//		testMode			= const bool&
 //
 // Output Arguments:
 //		None
@@ -57,19 +59,19 @@
 //
 //==========================================================================
 EmailSender::EmailSender(const std::string &subject, const std::string &message,
-	const std::string &imageFileName, const std::vector<AddressInfo> &recipients,
+	const std::string &attachmentFileName, const std::vector<AddressInfo> &recipients,
 	const LoginInfo &loginInfo, const bool &useHTML, const bool& testMode,
-	UString::OStream &outStream) : subject(subject), message(message), imageFileName(imageFileName),
+	UString::OStream &outStream) : subject(subject), message(message), attachmentFileName(attachmentFileName),
 	recipients(recipients), loginInfo(loginInfo), useHTML(useHTML), testMode(testMode),
 	outStream(outStream)
 {
 	assert(recipients.size() > 0);
-	assert(!useHTML || imageFileName.empty());
+	assert(!useHTML || attachmentFileName.empty());
 
 	if (testMode)
 	{
 		outStream << "Using cURL version:" << std::endl << curl_version() << std::endl;
-		outStream << "Image file name: '" << UString::ToStringType(imageFileName) << "'." << std::endl;
+		outStream << "Attachment file name: '" << UString::ToStringType(attachmentFileName) << "'" << std::endl;
 	}
 }
 
@@ -120,6 +122,7 @@ bool EmailSender::Send()
 	{
 		curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
 		curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, UString::ToNarrowString(OAuth2Interface::Get().GetAccessToken()).c_str());
+		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BEARER);// Available after version 7.61 only?
 	}
 
 	if (testMode)
@@ -146,8 +149,10 @@ bool EmailSender::Send()
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, &EmailSender::PayloadSource);
 	curl_easy_setopt(curl, CURLOPT_READDATA, &uploadCtx);
 
-    result = curl_easy_perform(curl);
-    if(result != CURLE_OK)
+	//curl_easy_setopt(curl, CURLOPT_DEBUGFUNCTION, DebugCallback);
+	result = curl_easy_perform(curl);
+
+	if(result != CURLE_OK)
 		outStream << "Failed sending e-mail:  " << curl_easy_strerror(result) << std::endl;
 
     curl_slist_free_all(recipientList);
@@ -179,11 +184,11 @@ void EmailSender::GeneratePayloadText()
 
 	unsigned int payloadLines(7 + messageText.size());
 	std::string base64File;
-	if (!imageFileName.empty())
+	if (!attachmentFileName.empty())
 	{
 		assert(!useHTML);
 		unsigned int lines;
-		base64File = Base64Encode(imageFileName, lines);
+		base64File = Base64Encode(attachmentFileName, lines);
 		payloadLines += 18 + lines;// Not sure why 18 (I count 16), but there is an extra +2 that needs to be here
 	}
 	else if (useHTML)
@@ -210,7 +215,7 @@ void EmailSender::GeneratePayloadText()
 	payloadText[k] = "Subject: " + subject + "\n"; k++;
 
 	// Special header contents when attaching a file
-	if (!imageFileName.empty())
+	if (!attachmentFileName.empty())
 	{
 		payloadText[k] = "Content-Type: multipart/mixed; boundary=" + boundary + "\n"; k++;
 		payloadText[k] = "MIME-Version: 1.0\n"; k++;
@@ -243,17 +248,25 @@ void EmailSender::GeneratePayloadText()
 	}
 
 	// Special body contents when attaching a file
-	if (!imageFileName.empty())
+	if (!attachmentFileName.empty())
 	{
-		std::string image = imageFileName.substr(imageFileName.find_last_of('/') + 1);
+		const std::string fileNameOnly(attachmentFileName.substr(attachmentFileName.find_last_of('/') + 1));
+		const auto extension(GetExtension(attachmentFileName));
 
 		payloadText[k] = "\n"; k++;
 		payloadText[k] = "--" + boundary + "\n"; k++;
-		payloadText[k] = "Content-Type: image/" + GetExtension(imageFileName) + ";\n"; k++;
-		payloadText[k] = "	name=\"" + image + "\"\n"; k++;
+		if (IsImageExtension(extension))
+		{
+			payloadText[k] = "Content-Type: image/" + extension + ";\n"; k++;
+		}
+		else
+		{
+			payloadText[k] = "Content-Type: image/" + extension + ";\n"; k++;// TODO:  How to attach other files?
+		}
+		payloadText[k] = "	name=\"" + fileNameOnly + "\"\n"; k++;
 		payloadText[k] = "Content-Transfer-Encoding: base64\n"; k++;
 		payloadText[k] = "Content-Disposition: attachment;\n"; k++;
-		payloadText[k] = "	filename=\"" + image + "\";\n"; k++;
+		payloadText[k] = "	filename=\"" + fileNameOnly + "\";\n"; k++;
 
 		size_t cr(0);
 		while (cr != std::string::npos)
@@ -581,4 +594,41 @@ std::string EmailSender::Base64Encode(const std::string &fileName, unsigned int 
 std::string EmailSender::GetExtension(const std::string &s)
 {
 	return s.substr(s.find_last_of('.') + 1);
+}
+
+//==========================================================================
+// Class:			EmailSender
+// Function:		IsImageExtension
+//
+// Description:		Returns true if the extension is a known image format.
+//
+// Input Arguments:
+//		extension	= std::string
+//
+// Output Arguments:
+//		None
+//
+// Return Value:
+//		bool
+//
+//==========================================================================
+bool EmailSender::IsImageExtension(std::string extension)
+{
+	std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c){ return std::tolower(c); });
+	return extension == std::string("jpg") ||
+		extension == std::string("jpeg") ||
+		extension == std::string("png") ||
+		extension == std::string("bmp");
+}
+
+int EmailSender::DebugCallback(CURL*, curl_infotype type, char* data, size_t size, void*)
+{
+	if (type == CURLINFO_HEADER_OUT)
+		std::cerr << "Outgoing header info:\n" << std::string(data, size) << '\n';
+	else if (type == CURLINFO_TEXT)
+		std::cerr << "Text info:\n" << std::string(data, size) << '\n';
+	else if (type == CURLINFO_DATA_OUT)
+		std::cerr << "Outgoing data:\n" << std::string(data, size) << '\n';
+	
+	return 0;
 }

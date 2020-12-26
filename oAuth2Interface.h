@@ -28,6 +28,7 @@ public:
 	void SetLoggingTarget(UString::OStream& newLog) { log = &newLog; }
 
 	void SetAuthenticationURL(const UString::String &authURLIn) { authURL = authURLIn; }
+	void SetAuthenticationPollURL(const UString::String &authPollURLIn) { authPollURL = authPollURLIn; }
 	void SetTokenURL(const UString::String &tokenURLIn) { tokenURL = tokenURLIn; }
 	void SetResponseType(const UString::String &responseTypeIn) { responseType = responseTypeIn; }
 	void SetClientID(const UString::String &clientIDIn) { clientID = clientIDIn; }
@@ -36,6 +37,7 @@ public:
 	void SetScope(const UString::String &scopeIn) { scope = scopeIn; }
 	void SetLoginHint(const UString::String &loginHintIn) { loginHint = loginHintIn; }
 	void SetGrantType(const UString::String &grantTypeIn) { grantType = grantTypeIn; }
+	void SetPollGrantType(const UString::String &pollGrantTypeIn) { pollGrantType = pollGrantTypeIn; }
 
 	void SetRefreshToken(const UString::String &refreshTokenIn = UString::String());
 
@@ -52,6 +54,7 @@ private:
 	UString::OStream* log = &Cout;
 
 	UString::String authURL;
+	UString::String authPollURL;
 	UString::String tokenURL;
 	UString::String responseType;
 	UString::String clientID;
@@ -60,6 +63,7 @@ private:
 	UString::String scope;
 	UString::String loginHint;
 	UString::String grantType;
+	UString::String pollGrantType;
 
 	UString::String refreshToken;
 	UString::String accessToken;
@@ -69,7 +73,7 @@ private:
 	UString::String RequestRefreshToken();
 
 	UString::String AssembleRefreshRequestQueryString(const UString::String &state = UString::String()) const;
-	UString::String AssembleAccessRequestQueryString(const UString::String &code = UString::String()) const;
+	UString::String AssembleAccessRequestQueryString(const UString::String &code = UString::String(), const bool& usePollGrantType = false) const;
 
 	struct AuthorizationResponse
 	{

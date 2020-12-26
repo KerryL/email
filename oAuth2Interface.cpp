@@ -169,7 +169,7 @@ UString::String OAuth2Interface::RequestRefreshToken()
 		if (!DoCURLPost(authURL, UString::ToNarrowString(AssembleRefreshRequestQueryString()), rawReadBuffer))
 			return UString::String();
 
-		const UString::String readBuffer(UString::ToStringType(rawReadBuffer));
+		UString::String readBuffer(UString::ToStringType(rawReadBuffer));
 
 		if (ResponseContainsError(readBuffer))
 			return UString::String();
@@ -178,7 +178,7 @@ UString::String OAuth2Interface::RequestRefreshToken()
 		if (!HandleAuthorizationRequestResponse(readBuffer, authResponse))
 			return UString::String();
 
-		UString::String queryString = AssembleAccessRequestQueryString(authResponse.deviceCode);
+		UString::String queryString = AssembleAccessRequestQueryString(authResponse.deviceCode, true);
 
 		time_t startTime = time(nullptr);
 		time_t now = startTime;
@@ -196,8 +196,9 @@ UString::String OAuth2Interface::RequestRefreshToken()
 				return UString::String();
 			}
 
-			if (!DoCURLPost(tokenURL, UString::ToNarrowString(queryString), rawReadBuffer))
+			if (!DoCURLPost(authPollURL, UString::ToNarrowString(queryString), rawReadBuffer))
 				return UString::String();
+			readBuffer = UString::ToStringType(rawReadBuffer);
 
 			if (ResponseContainsError(readBuffer))
 				return UString::String();
@@ -339,7 +340,7 @@ bool OAuth2Interface::ResponseContainsError(const UString::String &buffer)
 	UString::String error;
 	if (ReadJSON(root, _T("error"), error))
 	{
-		if (error.compare(_T("authorization_pending")) != 0)
+		if (error != _T("authorization_pending"))
 		{
 			UString::OStringStream ss;
 			ss << "Recieved error from OAuth server:  " << error;
@@ -584,7 +585,8 @@ UString::String OAuth2Interface::AssembleRefreshRequestQueryString(const UString
 //					token.
 //
 // Input Arguments:
-//		code	= const UString::String&
+//		code				= const UString::String&
+//		usePollGrantType	= const bool&
 //
 // Output Arguments:
 //		None
@@ -593,7 +595,7 @@ UString::String OAuth2Interface::AssembleRefreshRequestQueryString(const UString
 //		String containing access token (or empty UString::String on error)
 //
 //==========================================================================
-UString::String OAuth2Interface::AssembleAccessRequestQueryString(const UString::String &code) const
+UString::String OAuth2Interface::AssembleAccessRequestQueryString(const UString::String &code, const bool& usePollGrantType) const
 {
 	assert((!refreshToken.empty() || !code.empty()) &&
 		!clientID.empty() &&
@@ -612,8 +614,14 @@ UString::String OAuth2Interface::AssembleAccessRequestQueryString(const UString:
 	}
 	else
 	{
-		queryString.append(_T("&code=") + code);
-		queryString.append(_T("&grant_type=") + grantType);
+		queryString.append(_T("&device_code=") + code);
+		if (usePollGrantType)
+		{
+			assert(!pollGrantType.empty());
+			queryString.append(_T("&grant_type=") + pollGrantType);
+		}
+		else
+			queryString.append(_T("&grant_type=") + grantType);
 		if (!redirectURI.empty())
 			queryString.append(_T("&redirect_uri=") + redirectURI);
 	}

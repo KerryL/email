@@ -33,7 +33,7 @@ public:
 		std::string displayName;
 	};
 
-	EmailSender(const std::string &subject, const std::string &message, const std::string &imageFileName,
+	EmailSender(const std::string &subject, const std::string &message, const std::string &attachmentFileName,
 		const std::vector<AddressInfo> &recipients, const LoginInfo &loginInfo, const bool &useHTML,
 		const bool &testMode, UString::OStream &outStream = Cout);
 
@@ -42,7 +42,7 @@ public:
 private:
 	const std::string subject;
 	const std::string message;
-	const std::string imageFileName;
+	const std::string attachmentFileName;
 	const std::vector<AddressInfo> recipients;
 	const LoginInfo loginInfo;
 	const bool useHTML;
@@ -69,6 +69,10 @@ private:
 	static std::string ExtractDomain(const std::string &s);
 	static std::string Base64Encode(const std::string &fileName, unsigned int &lines);
 	static std::string GetExtension(const std::string &s);
+	
+	static bool IsImageExtension(std::string extension);
+	
+	static int DebugCallback(CURL* handle, curl_infotype type, char* data, size_t size, void *userp);
 };
 
 #endif// EMAIL_SENDER_H_
