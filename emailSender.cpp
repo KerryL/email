@@ -3,14 +3,12 @@
 // Auth:  K. Loux
 // Desc:  Class which uses libcurl to send e-mails.
 
-// Standard C++ headers
-#include <iostream>
-#include <fstream>
-#include <time.h>
-#include <sstream>
-#include <cstring>
-#include <algorithm>
-#include <cctype>
+// Local headers
+#include "emailSender.h"
+#include "oAuth2Interface.h"
+
+// rpi headers
+#include "utilities/timingUtility.h"
 
 // OS headers
 #ifdef _WIN32
@@ -23,18 +21,14 @@
 #endif
 
 // Standard C++ headers
+#include <iostream>
+#include <fstream>
+#include <time.h>
+#include <sstream>
+#include <cstring>
+#include <cctype>
 #include <cassert>
 #include <algorithm>
-
-// cURL headers
-#include <curl/curl.h>
-
-// Local headers
-#include "emailSender.h"
-#include "oAuth2Interface.h"
-
-// rpi headers
-#include "utilities/timingUtility.h"
 
 //==========================================================================
 // Class:			EmailSender
@@ -122,7 +116,6 @@ bool EmailSender::Send()
 	{
 		curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
 		curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, UString::ToNarrowString(OAuth2Interface::Get().GetAccessToken()).c_str());
-		curl_easy_setopt(curl, CURLOPT_HTTPAUTH, CURLAUTH_BEARER);// Available after version 7.61 only?
 	}
 
 	if (testMode)

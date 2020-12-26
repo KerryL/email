@@ -6,13 +6,16 @@
 #ifndef EMAIL_SENDER_H_
 #define EMAIL_SENDER_H_
 
+// Local headers
+#include "utilities/uString.h"
+
+// cURL headers
+#include <curl/curl.h>
+
 // Standard C++ headers
 #include <string>
 #include <vector>
 #include <memory>
-
-// Local headers
-#include "utilities/uString.h"
 
 class EmailSender
 {
