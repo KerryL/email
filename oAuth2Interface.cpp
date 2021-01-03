@@ -614,7 +614,11 @@ UString::String OAuth2Interface::AssembleAccessRequestQueryString(const UString:
 	}
 	else
 	{
-		queryString.append(_T("&device_code=") + code);
+		if (IsLimitedInput())
+			queryString.append(_T("&device_code=") + code);
+		else
+			queryString.append(_T("&code=") + code);
+			
 		if (usePollGrantType)
 		{
 			assert(!pollGrantType.empty());
