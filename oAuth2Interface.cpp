@@ -211,7 +211,7 @@ UString::String OAuth2Interface::RequestRefreshToken()
 		UString::String stateKey;// = GenerateSecurityStateKey();// Not sure why it doesn't work with the state key...
 
 		const UString::String assembledAuthURL(authURL + UString::Char('?') + AssembleRefreshRequestQueryString(stateKey));
-		CPPSocket webSocket(CPPSocket::SocketType::SocketTCPServer);
+		CPPSocket webSocket(CPPSocket::SocketType::SocketTCPServer, *log);
 		if (RedirectURIIsLocal())
 		{
 			if (!webSocket.Create(StripPortFromLocalRedirectURI(), UString::ToNarrowString(StripAddressFromLocalRedirectURI()).c_str()))
@@ -472,15 +472,19 @@ bool OAuth2Interface::HandleAccessRequestResponse(const UString::String &buffer)
 	}
 
 	UString::String tokenType;
+	UString::String scopes;
 	unsigned int tokenValidDuration;// [sec]
 	if (!ReadJSON(root, _T("access_token"), accessToken) ||
 		!ReadJSON(root, _T("token_type"), tokenType) ||
-		!ReadJSON(root, _T("expires_in"), tokenValidDuration))
+		!ReadJSON(root, _T("expires_in"), tokenValidDuration) ||
+		!ReadJSON(root, _T("scope"), scopes))
 	{
 		*log << "Failed to read all required fields from server" << std::endl;
 		cJSON_Delete(root);
 		return false;
 	}
+	
+	*log << "Received token for the following scopes:  " << scopes << std::endl;
 
 	if (tokenType.compare(_T("Bearer")) != 0)
 	{
