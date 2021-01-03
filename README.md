@@ -1,28 +1,36 @@
-#Commonly Used Email Classes
+# Commonly Used Email Classes
 
-Date:       5/14/2015
-Author:     K. Loux
-Copyright:  Kerry Loux 2015
-Licence:    MIT (see LICENSE file)
+Date:       5/14/2015  
+Author:     K. Loux  
+Copyright:  Kerry Loux 2015  
+Licence:    MIT (see LICENSE file)  
 
 This collection of classes are used in several of my projects, so I decided to break them out as a submodule for ease of maintenance.  This file contains some notes about using the classes contained in this repository.
 
 There are several guides online for using git submodules.  Here is my summary of the most useful git commands.
 - To add email to your project as a submodule:
+````
 $ cd <root directory of your superproject>
 $ git submodule add https://github.com/KerryL/email.git
+````
 
 NOTE:  To add a submodule within another directory, the destination must be specified following the repository url, so instead of the last step above, it would be:
+````
 $ git submodule add https://github.com/KerryL/email.git <desired path>/email
+````
 
 - Cloning a repository using a submodule now requires a couple of extra steps:
+````
 $ git clone ...
 $ cd <project directory created by above clone command>
 $ git submodule init
 $ git submodule update
+````
 
 NOTE:  If your submodules are not in your projects root folder, you'll need to specify that the submodule update should recurse into other folders.  Replace the last command above with:
+````
 $ git submodule update --recursive
+````
 
 Notes on sending email with these classes:
 These classes are designed to be used with Gmail via Google's OAuth2 implementation.  In order to use these classes with Gmail, some setup is required with your Google account.  You will need to do the following:
@@ -32,7 +40,7 @@ These classes are designed to be used with Gmail via Google's OAuth2 implementat
 	*  Add a Test user.
 3.  From the Dashboard, click on "Enable APIs and Services" and enable the Gmail API.
 4.  From the Credentials page, click on "Create Credentials" and select "OAuth Client ID".  Select "Desktop App" for the Application Type.
-5.  Note the Client ID and Client secret; these fields need to be passed to the OAuth2Interface singleton as shown below.  The sender's email address must match the test user configured in step 2b.
+5.  Note the Client ID and Client secret; these fields need to be passed to the OAuth2Interface singleton as shown below.  The sender's email address must match the test user configured in step 2.
 
 Also, note that the OAuth2Interface class is implemented in a generic way.  It is up to the develper to specify the correct URLs, grant types, scopes, etc.  One possible way to make calls to set up the interface is
 
