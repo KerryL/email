@@ -414,7 +414,7 @@ bool OAuth2Interface::HandleAuthorizationRequestResponse(
 // Description:		Processes JSON responses from server.
 //
 // Input Arguments:
-//		buffer	= const UString::String & containing JSON UString::
+//		buffer	= const UString::String& containing JSON
 //
 // Output Arguments:
 //		None
