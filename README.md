@@ -32,7 +32,7 @@ NOTE:  If your submodules are not in your projects root folder, you'll need to s
 $ git submodule update --recursive
 ````
 
-Notes on sending email with these classes:
+## Notes on sending email with these classes
 These classes are designed to be used with Gmail via Google's OAuth2 implementation.  In order to use these classes with Gmail, some setup is required with your Google account.  You will need to do the following:
 1.  Visit https://console.developers.google.com/
 2.  Create a new project and go through the setup process.
