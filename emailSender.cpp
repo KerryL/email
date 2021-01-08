@@ -227,7 +227,7 @@ void EmailSender::GeneratePayloadText()
 		payloadText[k] = "\n"; k++;
 		payloadText[k] = "<html>\n"; k++;
 		payloadText[k] = "<head>\n"; k++;
-		payloadText[k] = "<meta http-equiv=3D\"Content-Type\" content=3D\"text/html; charset=3D\"ISO-8859-1\">\n"; k++;
+		payloadText[k] = "<meta http-equiv=3D\"Content-Type\" content=3D\"text/html; charset=3D\"UTF-8\">\n"; k++;
 		payloadText[k] = "</head>\n"; k++;
 		payloadText[k] = "<body>\n"; k++;
 	}
