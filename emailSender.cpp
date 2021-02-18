@@ -175,7 +175,7 @@ void EmailSender::GeneratePayloadText()
 	payloadText.clear();
 	GenerateMessageText();
 
-	unsigned int payloadLines(7 + messageText.size());
+	auto payloadLines(7 + messageText.size());
 	std::string base64File;
 	if (!attachmentFileName.empty())
 	{
