@@ -607,7 +607,7 @@ std::string EmailSender::GetExtension(const std::string &s)
 //==========================================================================
 bool EmailSender::IsImageExtension(std::string extension)
 {
-	std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c){ return std::tolower(c); });
+	std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c){ return static_cast<unsigned char>(std::tolower(c)); });
 	return extension == std::string("jpg") ||
 		extension == std::string("jpeg") ||
 		extension == std::string("png") ||
