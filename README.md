@@ -19,17 +19,11 @@ NOTE:  To add a submodule within another directory, the destination must be spec
 $ git submodule add https://github.com/KerryL/email.git <desired path>/email
 ````
 
-- Cloning a repository using a submodule now requires a couple of extra steps:
+- Cloning a repository using a submodule now requires an extra step:
 ````
 $ git clone ...
 $ cd <project directory created by above clone command>
-$ git submodule init
-$ git submodule update
-````
-
-NOTE:  If your submodules are not in your projects root folder, you'll need to specify that the submodule update should recurse into other folders.  Replace the last command above with:
-````
-$ git submodule update --recursive
+$ git submodule update --init --recursive
 ````
 
 ## Notes on sending email with these classes
