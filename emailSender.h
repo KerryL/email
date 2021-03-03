@@ -42,6 +42,8 @@ public:
 
 	bool Send();
 
+	void DisableSignaling(const bool& disable = true) { disableSignaling = disable; }
+
 private:
 	const std::string subject;
 	const std::string message;
@@ -50,6 +52,7 @@ private:
 	const LoginInfo loginInfo;
 	const bool useHTML;
 	const bool testMode;
+	bool disableSignaling;
 	UString::OStream &outStream;
 
 	struct UploadStatus
