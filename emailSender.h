@@ -8,6 +8,7 @@
 
 // Local headers
 #include "utilities/uString.h"
+#include "jsonInterface.h"
 
 // cURL headers
 #include <curl/curl.h>
@@ -42,6 +43,8 @@ public:
 
 	bool Send();
 
+	bool SendREST();
+
 	void DisableSignaling(const bool& disable = true) { disableSignaling = disable; }
 
 private:
@@ -73,12 +76,27 @@ private:
 	std::string GenerateMessageID() const;
 	static std::string GenerateBoundryID();
 	static std::string ExtractDomain(const std::string &s);
-	static std::string Base64Encode(const std::string &fileName, unsigned int &lines);
+	static std::string Base64EncodeFile(const std::string &fileName, unsigned int &lines);
+	static std::string Base64Encode(const std::string &s, const bool& wrapLines = true, unsigned int *lines = nullptr);
 	static std::string GetExtension(const std::string &s);
 	
 	static bool IsImageExtension(std::string extension);
 	
 	static int DebugCallback(CURL* handle, curl_infotype type, char* data, size_t size, void *userp);
+
+	class EmailPOSTer : public JSONInterface
+	{
+	public:
+		struct AdditionalPostData : public ModificationData
+		{
+			curl_slist* headerList = nullptr;
+		};
+
+		bool POST(const UString::String &url, const std::string &data, const AdditionalPostData& additionalData, std::string &response);
+
+	private:
+		static bool AddOAuthToken(CURL* curl, const ModificationData* tokenInfo);
+	};
 };
 
 #endif// EMAIL_SENDER_H_

@@ -79,7 +79,7 @@ private:
 	{
 		UString::String deviceCode;
 		double expiresIn;
-		int interval;
+		int interval;// [sec]
 	};
 
 	bool HandleAuthorizationRequestResponse(const UString::String &buffer,

@@ -40,6 +40,7 @@ protected:
 
 	struct ModificationData
 	{
+		virtual ~ModificationData() = default;
 	};
 
 	typedef bool (*CURLModification)(CURL*, const ModificationData*);

@@ -159,6 +159,62 @@ bool EmailSender::Send()
 
 //==========================================================================
 // Class:			EmailSender
+// Function:		SendREST
+//
+// Description:		Sends e-mail as using Google's REST API.
+//
+// Input Arguments:
+//		None
+//
+// Output Arguments:
+//		None
+//
+// Return Value:
+//		bool
+//
+//==========================================================================
+bool EmailSender::SendREST()
+{
+	EmailPOSTer poster;
+	poster.SetVerboseOutput(testMode);
+
+	EmailPOSTer::AdditionalPostData postHeaders;
+	postHeaders.headerList = curl_slist_append(postHeaders.headerList, (std::string("Authorization: Bearer ") + UString::ToNarrowString(OAuth2Interface::Get().GetAccessToken())).c_str());
+	postHeaders.headerList = curl_slist_append(postHeaders.headerList, "Content-Type: application/json");
+
+	GeneratePayloadText();
+	std::string mail;
+	for (const auto& line : payloadText)
+		mail.append(line);
+
+	mail = Base64Encode(mail, false);
+
+	std::string jsonBody(std::string("{ raw: \"") + mail + std::string("\"}"));
+	std::string response;
+	const auto result(poster.POST(UString::ToStringType(loginInfo.smtpUrl), jsonBody, postHeaders, response));
+	if (!result || testMode)
+		outStream << "Response to send POST:\n" << UString::ToStringType(response) << std::endl;
+
+	return result;
+}
+
+bool EmailSender::EmailPOSTer::POST(const UString::String &url, const std::string &data, const AdditionalPostData& additionalData, std::string &response)
+{
+	return DoCURLPost(url, data, response, &EmailSender::EmailPOSTer::AddOAuthToken, &additionalData);
+}
+
+bool EmailSender::EmailPOSTer::AddOAuthToken(CURL* curl, const ModificationData* data)
+{
+	// Below is possibly better in newer versions of libcurl?
+	//curl_easy_setopt(curl, CURLOPT_XOAUTH2_BEARER, UString::ToNarrowString(OAuth2Interface::Get().GetAccessToken()).c_str());
+	const AdditionalPostData* args(dynamic_cast<const AdditionalPostData*>(data));
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, args->headerList);
+
+	return true;
+}
+
+//==========================================================================
+// Class:			EmailSender
 // Function:		GeneratePayloadText
 //
 // Description:		Generates e-mail payload.
@@ -184,7 +240,7 @@ void EmailSender::GeneratePayloadText()
 	{
 		assert(!useHTML);
 		unsigned int lines;
-		base64File = Base64Encode(attachmentFileName, lines);
+		base64File = Base64EncodeFile(attachmentFileName, lines);
 		payloadLines += 18 + lines;// Not sure why 18 (I count 16), but there is an extra +2 that needs to be here
 	}
 	else if (useHTML)
@@ -497,6 +553,74 @@ std::string EmailSender::ExtractDomain(const std::string &s)
 // Class:			EmailSender
 // Function:		Base64Encode
 //
+// Description:		Encodes the specified string into a base64 string.
+//
+// Input Arguments:
+//		s			= const std::string&
+//		wrapLines	= const bool&
+//
+// Output Arguments:
+//		lines	= unsigned int*
+//
+// Return Value:
+//		std::string
+//
+//==========================================================================
+std::string EmailSender::Base64Encode(const std::string &s, const bool& wrapLines, unsigned int *lines)
+{
+	const char* charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+	unsigned int localLines = 0;
+	std::string buf;
+	for (unsigned int i = 0; i < s.size(); i += 3)
+	{
+		unsigned char oct1(s[i]);
+		unsigned char oct2(0);
+		unsigned char oct3(0);
+
+		if (i + 1 < s.size())
+			oct2 = s[i + 1];
+		if (i + 2 < s.size())
+			oct3 = s[i + 2];
+
+		unsigned char hex1(oct1 >> 2);
+		unsigned char hex2(((oct1 & 0x3) << 4) | (oct2 >> 4));
+		unsigned char hex3(((oct2 & 0xf) << 2) | (oct3 >> 6));
+		unsigned char hex4(oct3 & 0x3f);
+
+		buf += charset[hex1];
+		buf += charset[hex2];
+
+		if (i + 1 < s.size())
+			buf += charset[hex3];
+		else
+			buf += "=";
+
+		if (i + 2 < s.size())
+			buf += charset[hex4];
+		else
+			buf += "=";
+
+		if (wrapLines && (buf.size() - localLines) % 76 == 0)
+		{
+			buf += "\n";
+			localLines++;
+		}
+	}
+
+	if (wrapLines)
+		buf += "\n";
+
+	if (lines)
+		*lines = localLines;
+
+	return buf;
+}
+
+//==========================================================================
+// Class:			EmailSender
+// Function:		Base64EncodeFile
+//
 // Description:		Encodes the specified file into a base64 string.
 //
 // Input Arguments:
@@ -509,7 +633,7 @@ std::string EmailSender::ExtractDomain(const std::string &s)
 //		std::string
 //
 //==========================================================================
-std::string EmailSender::Base64Encode(const std::string &fileName, unsigned int &lines)
+std::string EmailSender::Base64EncodeFile(const std::string &fileName, unsigned int &lines)
 {
 	lines = 1;
 	std::ifstream inFile(fileName.c_str(), std::ios::binary);
@@ -520,54 +644,11 @@ std::string EmailSender::Base64Encode(const std::string &fileName, unsigned int 
 
 	inFile >> std::noskipws;
 	unsigned char uc;
-	std::vector<unsigned char> v;
+	std::string s;
 	while (inFile >> uc, !inFile.eof())
-		v.push_back(uc);
+		s.push_back(uc);
 
-	const char* charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
-	unsigned int i;
-	lines = 0;
-	std::string buf;
-	for (i = 0; i < v.size(); i += 3)
-	{
-		unsigned char oct1(v[i]);
-		unsigned char oct2(0);
-		unsigned char oct3(0);
-
-		if (i + 1 < v.size())
-			oct2 = v[i + 1];
-		if (i + 2 < v.size())
-			oct3 = v[i + 2];
-
-		unsigned char hex1(oct1 >> 2);
-		unsigned char hex2(((oct1 & 0x3) << 4) | (oct2 >> 4));
-		unsigned char hex3(((oct2 & 0xf) << 2) | (oct3 >> 6));
-		unsigned char hex4(oct3 & 0x3f);
-
-		buf += charset[hex1];
-		buf += charset[hex2];
-
-		if (i + 1 < v.size())
-			buf += charset[hex3];
-		else
-			buf += "=";
-
-		if (i + 2 < v.size())
-			buf += charset[hex4];
-		else
-			buf += "=";
-
-		if ((buf.size() - lines) % 76 == 0)
-		{
-			buf += "\n";
-			lines++;
-		}
-	}
-
-	buf += "\n";
-
-	return buf;
+	return Base64Encode(s, &lines);
 }
 
 //==========================================================================

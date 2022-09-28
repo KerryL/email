@@ -9,6 +9,7 @@
 #include <sstream>
 #include <ctime>
 #include <algorithm>
+#include <chrono>
 
 // Standard C headers
 #include <string.h>
@@ -184,11 +185,7 @@ UString::String OAuth2Interface::RequestRefreshToken()
 		time_t now = startTime;
 		while (!HandleRefreshRequestResponse(readBuffer, true))
 		{
-#ifdef _WIN32
-			Sleep(1000 * authResponse.interval);
-#else
-			sleep(authResponse.interval);
-#endif
+			std::this_thread::sleep_for(std::chrono::seconds(authResponse.interval));
 			now = time(nullptr);
 			if (difftime(now, startTime) > authResponse.expiresIn)
 			{
@@ -209,6 +206,7 @@ UString::String OAuth2Interface::RequestRefreshToken()
 		assert(!responseType.empty());
 
 		UString::String stateKey;// = GenerateSecurityStateKey();// Not sure why it doesn't work with the state key...
+		// TODO:  Appropriate to use code challenge here (without user specifying anything?)
 
 		const UString::String assembledAuthURL(authURL + UString::Char('?') + AssembleRefreshRequestQueryString(stateKey));
 		CPPSocket webSocket(CPPSocket::SocketType::SocketTCPServer, *log);
