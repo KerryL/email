@@ -648,7 +648,7 @@ std::string EmailSender::Base64EncodeFile(const std::string &fileName, unsigned 
 	while (inFile >> uc, !inFile.eof())
 		s.push_back(uc);
 
-	return Base64Encode(s, &lines);
+	return Base64Encode(s, true, &lines);
 }
 
 //==========================================================================
